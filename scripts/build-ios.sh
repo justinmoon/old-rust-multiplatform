@@ -1,7 +1,5 @@
 #!/bin/bash
-
-set -e
- 
+set -ex
 cd rust
 
 # Build the dylib

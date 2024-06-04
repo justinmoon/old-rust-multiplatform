@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -ex
 cd rust
  
 # Set up cargo-ndk and add the Android targets

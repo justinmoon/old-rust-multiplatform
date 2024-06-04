@@ -1,6 +1,5 @@
 #!/bin/bash
 set -ex
-
 cd ios
 
 SCHEME="Counter"

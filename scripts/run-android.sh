@@ -1,11 +1,11 @@
 #!/bin/bash
+set -ex
+cd android
 
 # Variables
 PACKAGE_NAME="com.example.counter"
 ACTIVITY_NAME=".MainActivity"
 APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
-
-cd android
 
 # Build the debug version of the app
 ./gradlew assembleDebug
