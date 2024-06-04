@@ -6,3 +6,6 @@ run-android:
 
 build-ios:
     bash scripts/build-ios.sh
+
+run-ios:
+    bash scripts/run-ios.sh
