@@ -13,7 +13,7 @@ rustup target add aarch64-linux-android \
 cargo build
  
 # Build the Android libraries in jniLibs
-cargo ndk -o ./app/src/main/jniLibs \
+cargo ndk -o ../android/app/src/main/jniLibs \
         --manifest-path ./Cargo.toml \
         -t armeabi-v7a \
         -t arm64-v8a \
@@ -25,4 +25,4 @@ cargo ndk -o ./app/src/main/jniLibs \
 cargo run --bin uniffi-bindgen generate \
     --library ./target/debug/libcounter.dylib \
     --language kotlin \
-    --out-dir ./app/src/main/java/tech/forgen/todolist/rust
+    --out-dir ../android/app/src/main/java/tech/forgen/todolist/rust
