@@ -25,4 +25,4 @@ cargo ndk -o ../android/app/src/main/jniLibs \
 cargo run --bin uniffi-bindgen generate \
     --library ./target/debug/libcounter.dylib \
     --language kotlin \
-    --out-dir ../android/app/src/main/java/tech/forgen/todolist/rust
+    --out-dir ../android/app/src/main/java/com/example/counter

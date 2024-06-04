@@ -27,7 +27,8 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val message = sayHi() // Calling the Rust function
-                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()                }
+                    Text(message)
+                }
             }
         }
     }
