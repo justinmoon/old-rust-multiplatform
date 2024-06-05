@@ -47,7 +47,8 @@ impl Updater {
 
 // FIXME(justin): seems like this should be called FFiListener or something like
 // that. Maybe the callback should be `handle_update`?
-#[uniffi::export(with_foreign)]
+// #[uniffi::export(with_foreign)]
+#[uniffi::export(callback_interface)]
 pub trait FfiUpdater: Send + Sync + 'static {
     /// Essentially a callback to the frontend
     fn update(&self, update: Update);
@@ -105,13 +106,8 @@ impl App {
 #[derive(uniffi::Object)]
 pub struct FfiApp;
 
-// #[uniffi::export(async_runtime = "tokio")]
+#[uniffi::export]
 impl FfiApp {
-    /// Fetch global instance of the app, or create one if it doesn't exist
-    fn inner(&self) -> &RwLock<App> {
-        App::global()
-    }
-
     /// FFI constructor which wraps in an Arc
     #[uniffi::constructor]
     pub fn new() -> Arc<Self> {
@@ -122,5 +118,19 @@ impl FfiApp {
     pub fn dispatch(&self, event: Event) {
         // FIXME: this won't be able to handle concurrent events ...
         self.inner().write().expect("fixme").handle_event(event);
+    }
+
+    pub fn listen_for_updates(&self, updater: Box<dyn FfiUpdater>) {
+        self.inner()
+            .read()
+            .expect("fixme")
+            .listen_for_updates(updater);
+    }
+}
+
+impl FfiApp {
+    /// Fetch global instance of the app, or create one if it doesn't exist
+    fn inner(&self) -> &RwLock<App> {
+        App::global()
     }
 }
