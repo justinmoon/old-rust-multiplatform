@@ -1,6 +1,12 @@
 use std::sync::{Arc, RwLock};
 
-use crate::{App, Event, FfiUpdater};
+use crate::{App, Event, Update};
+
+#[uniffi::export(callback_interface)]
+pub trait FfiUpdater: Send + Sync + 'static {
+    /// Essentially a callback to the frontend
+    fn update(&self, update: Update);
+}
 
 /// Representation of our app over FFI. Essentially a wrapper of [`App`].
 #[derive(uniffi::Object)]

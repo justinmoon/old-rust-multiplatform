@@ -9,3 +9,6 @@ build-ios:
 
 run-ios:
     bash scripts/run-ios.sh
+
+build-wasm:
+    wasm-pack build --target web --out-dir build rust/

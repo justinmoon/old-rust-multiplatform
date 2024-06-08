@@ -1,34 +1,30 @@
 uniffi::setup_scaffolding!();
 
 mod ffi;
+mod wasm;
 
 use std::sync::{Arc, RwLock};
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
+use ffi::FfiUpdater;
 use once_cell::sync::OnceCell;
+use serde::{Deserialize, Serialize};
+use wasm::WasmUpdater;
 
 // globals.rs
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 static UPDATER: OnceCell<Updater> = OnceCell::new();
 
 // events.rs
-#[derive(uniffi::Enum)]
+#[derive(uniffi::Enum, Serialize, Deserialize)]
 pub enum Event {
     Increment,
     Decrement,
 }
 
-#[derive(uniffi::Enum)]
+#[derive(uniffi::Enum, Serialize, Deserialize)]
 pub enum Update {
     CountChanged { count: i32 },
-}
-
-// FIXME: figure out a way to move this to ffi.rs, and have a more generic trait
-// that both FFI and WASM updaters conform to.
-#[uniffi::export(callback_interface)]
-pub trait FfiUpdater: Send + Sync + 'static {
-    /// Essentially a callback to the frontend
-    fn update(&self, update: Update);
 }
 
 // FIXME(justin): this is more of an "event bus"
@@ -91,8 +87,21 @@ impl App {
     pub fn listen_for_updates(&self, updater: Box<dyn FfiUpdater>) {
         let update_receiver = self.update_receiver.clone();
         std::thread::spawn(move || {
-            while let Ok(field) = update_receiver.recv() {
-                updater.update(field);
+            while let Ok(update) = update_receiver.recv() {
+                updater.update(update);
+            }
+        });
+    }
+
+    /// Wasm uses a different updater ...
+    pub fn listen_for_updates_wasm(&self, updater: WasmUpdater) {
+        let updater_arc = Arc::new(updater);
+        let update_receiver = self.update_receiver.clone();
+        // std::thread::spawn(move || {
+        tokio::spawn(async move {
+            while let Ok(update) = update_receiver.recv() {
+                let update = serde_json::to_string(&update).expect("fixme");
+                updater_arc.update(update);
             }
         });
     }
