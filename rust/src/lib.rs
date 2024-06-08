@@ -1,27 +1,28 @@
 uniffi::setup_scaffolding!();
 
+mod ffi;
+mod wasm;
+
 use std::sync::{Arc, RwLock};
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
+use ffi::FfiUpdater;
 use once_cell::sync::OnceCell;
-
-#[uniffi::export]
-pub fn say_hi() -> String {
-    "Hello v2".to_string()
-}
+use serde::{Deserialize, Serialize};
+use wasm::WasmUpdater;
 
 // globals.rs
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 static UPDATER: OnceCell<Updater> = OnceCell::new();
 
 // events.rs
-#[derive(uniffi::Enum)]
+#[derive(uniffi::Enum, Serialize, Deserialize)]
 pub enum Event {
     Increment,
     Decrement,
 }
 
-#[derive(uniffi::Enum)]
+#[derive(uniffi::Enum, Serialize, Deserialize)]
 pub enum Update {
     CountChanged { count: i32 },
 }
@@ -43,15 +44,6 @@ impl Updater {
             .send(update)
             .expect("failed to send update");
     }
-}
-
-// FIXME(justin): seems like this should be called FFiListener or something like
-// that. Maybe the callback should be `handle_update`?
-// #[uniffi::export(with_foreign)]
-#[uniffi::export(callback_interface)]
-pub trait FfiUpdater: Send + Sync + 'static {
-    /// Essentially a callback to the frontend
-    fn update(&self, update: Update);
 }
 
 /// Our application
@@ -95,42 +87,22 @@ impl App {
     pub fn listen_for_updates(&self, updater: Box<dyn FfiUpdater>) {
         let update_receiver = self.update_receiver.clone();
         std::thread::spawn(move || {
-            while let Ok(field) = update_receiver.recv() {
-                updater.update(field);
+            while let Ok(update) = update_receiver.recv() {
+                updater.update(update);
             }
         });
     }
-}
 
-/// Representation of our app over FFI. Essentially a wrapper of [`App`].
-#[derive(uniffi::Object)]
-pub struct FfiApp;
-
-#[uniffi::export]
-impl FfiApp {
-    /// FFI constructor which wraps in an Arc
-    #[uniffi::constructor]
-    pub fn new() -> Arc<Self> {
-        Arc::new(Self)
-    }
-
-    /// Frontend calls this method to send events to the rust application logic
-    pub fn dispatch(&self, event: Event) {
-        // FIXME: this won't be able to handle concurrent events ...
-        self.inner().write().expect("fixme").handle_event(event);
-    }
-
-    pub fn listen_for_updates(&self, updater: Box<dyn FfiUpdater>) {
-        self.inner()
-            .read()
-            .expect("fixme")
-            .listen_for_updates(updater);
-    }
-}
-
-impl FfiApp {
-    /// Fetch global instance of the app, or create one if it doesn't exist
-    fn inner(&self) -> &RwLock<App> {
-        App::global()
+    /// Wasm uses a different updater ...
+    pub fn listen_for_updates_wasm(&self, updater: WasmUpdater) {
+        let updater_arc = Arc::new(updater);
+        let update_receiver = self.update_receiver.clone();
+        // std::thread::spawn(move || {
+        tokio::spawn(async move {
+            while let Ok(update) = update_receiver.recv() {
+                let update = serde_json::to_string(&update).expect("fixme");
+                updater_arc.update(update);
+            }
+        });
     }
 }
