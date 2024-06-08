@@ -1,14 +1,11 @@
 uniffi::setup_scaffolding!();
 
+mod ffi;
+
 use std::sync::{Arc, RwLock};
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
-
-#[uniffi::export]
-pub fn say_hi() -> String {
-    "Hello v2".to_string()
-}
 
 // globals.rs
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
@@ -24,6 +21,14 @@ pub enum Event {
 #[derive(uniffi::Enum)]
 pub enum Update {
     CountChanged { count: i32 },
+}
+
+// FIXME: figure out a way to move this to ffi.rs, and have a more generic trait
+// that both FFI and WASM updaters conform to.
+#[uniffi::export(callback_interface)]
+pub trait FfiUpdater: Send + Sync + 'static {
+    /// Essentially a callback to the frontend
+    fn update(&self, update: Update);
 }
 
 // FIXME(justin): this is more of an "event bus"
@@ -43,15 +48,6 @@ impl Updater {
             .send(update)
             .expect("failed to send update");
     }
-}
-
-// FIXME(justin): seems like this should be called FFiListener or something like
-// that. Maybe the callback should be `handle_update`?
-// #[uniffi::export(with_foreign)]
-#[uniffi::export(callback_interface)]
-pub trait FfiUpdater: Send + Sync + 'static {
-    /// Essentially a callback to the frontend
-    fn update(&self, update: Update);
 }
 
 /// Our application
@@ -99,38 +95,5 @@ impl App {
                 updater.update(field);
             }
         });
-    }
-}
-
-/// Representation of our app over FFI. Essentially a wrapper of [`App`].
-#[derive(uniffi::Object)]
-pub struct FfiApp;
-
-#[uniffi::export]
-impl FfiApp {
-    /// FFI constructor which wraps in an Arc
-    #[uniffi::constructor]
-    pub fn new() -> Arc<Self> {
-        Arc::new(Self)
-    }
-
-    /// Frontend calls this method to send events to the rust application logic
-    pub fn dispatch(&self, event: Event) {
-        // FIXME: this won't be able to handle concurrent events ...
-        self.inner().write().expect("fixme").handle_event(event);
-    }
-
-    pub fn listen_for_updates(&self, updater: Box<dyn FfiUpdater>) {
-        self.inner()
-            .read()
-            .expect("fixme")
-            .listen_for_updates(updater);
-    }
-}
-
-impl FfiApp {
-    /// Fetch global instance of the app, or create one if it doesn't exist
-    fn inner(&self) -> &RwLock<App> {
-        App::global()
     }
 }
