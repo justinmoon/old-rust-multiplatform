@@ -1,26 +1,5 @@
 import SwiftUI
 
-@Observable class ViewModel: FfiUpdater {
-    var count: Int32 = 0;
-    var rust: FfiApp;
-    
-    public init() {
-        self.rust = FfiApp()
-        self.rust.listenForUpdates(updater: self)
-    }
-    
-    func update(update: Update) {
-        switch update {
-        case .countChanged(count: let count):
-            self.count = count
-        }
-    }
-    
-    public func dispatch(event: Event) {
-        self.rust.dispatch(event: event)
-    }
-}
-
 struct Counter: View {
     @State var rust: ViewModel;
     

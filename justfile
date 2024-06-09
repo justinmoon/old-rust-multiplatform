@@ -1,7 +1,7 @@
 build-android:
     bash scripts/build-android.sh
 
-run-android:
+run-android: build-android
     bash scripts/run-android.sh
 
 build-ios:

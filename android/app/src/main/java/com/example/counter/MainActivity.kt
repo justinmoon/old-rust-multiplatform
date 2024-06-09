@@ -11,7 +11,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CounterTheme {
-                CounterApp()
+                // CounterApp()
+                TimerApp()
             }
         }
     }

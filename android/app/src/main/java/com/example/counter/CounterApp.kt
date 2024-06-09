@@ -9,14 +9,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.counter.CounterViewModel
+import com.example.counter.ViewModel
 import com.example.counter.ui.theme.CounterTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
 import uniffi.counter.Event
 
 
 @Composable
-fun CounterApp(viewModel: CounterViewModel = viewModel()) {
+fun CounterApp(viewModel: ViewModel = viewModel()) {
     val count by viewModel.counter.collectAsState()
     Box(
         modifier = Modifier
