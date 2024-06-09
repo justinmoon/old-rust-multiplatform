@@ -1,6 +1,9 @@
 uniffi::setup_scaffolding!();
 
-use std::sync::{Arc, RwLock};
+use std::{
+    sync::{Arc, RwLock},
+    time::Duration,
+};
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
@@ -14,11 +17,16 @@ static UPDATER: OnceCell<Updater> = OnceCell::new();
 pub enum Event {
     Increment,
     Decrement,
+    TimerStart,
+    TimerPause,
+    TimerReset,
 }
 
 #[derive(uniffi::Enum)]
 pub enum Update {
     CountChanged { count: i32 },
+    // FIXME: https://github.com/mozilla/uniffi-rs/issues/1853
+    Timer { state: TimerState },
 }
 
 // FIXME(justin): this is more of an "event bus"
@@ -49,13 +57,41 @@ pub trait FfiUpdater: Send + Sync + 'static {
     fn update(&self, update: Update);
 }
 
-/// Our application
-pub struct App {
-    /// Count is the only state in our app
+#[derive(Clone, uniffi::Record)]
+pub struct TimerState {
+    elapsed_secs: u32,
+    active: bool,
+}
+
+impl TimerState {
+    pub fn new() -> Self {
+        Self {
+            elapsed_secs: 0,
+            active: false,
+        }
+    }
+}
+
+#[derive(Clone, uniffi::Record)]
+pub struct AppState {
     count: i32,
-    // /// Updater is a callback to the frontend
-    // updater: Box<dyn Updater>,
+    timer: TimerState,
+}
+
+impl AppState {
+    pub fn new() -> Self {
+        Self {
+            count: 0,
+            timer: TimerState::new(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct App {
+    state: Arc<RwLock<AppState>>,
     update_receiver: Arc<Receiver<Update>>,
+    handle: Arc<std::thread::JoinHandle<()>>,
 }
 
 impl App {
@@ -63,9 +99,27 @@ impl App {
     pub fn new() -> Self {
         let (sender, receiver): (Sender<Update>, Receiver<Update>) = unbounded();
         Updater::init(sender);
+        let state = Arc::new(RwLock::new(AppState::new()));
+
+        // FIXME: put this elsewhere ...
+        // And perhapse this should just emit events which handle_event listens for?
+        let state_clone = state.clone();
+        let handle = std::thread::spawn(move || loop {
+            std::thread::sleep(Duration::from_secs(1));
+            let mut state = state_clone.write().unwrap();
+            if !state.timer.active {
+                continue;
+            }
+            state.timer.elapsed_secs += 1;
+            Updater::send_update(Update::Timer {
+                state: state.timer.clone(),
+            });
+        });
+
         Self {
-            count: 0,
             update_receiver: Arc::new(receiver),
+            state,
+            handle: Arc::new(handle),
         }
     }
 
@@ -75,14 +129,42 @@ impl App {
     }
 
     /// Handle event received from frontend
-    pub fn handle_event(&mut self, event: Event) {
+    pub fn handle_event(&self, event: Event) {
         // Handle event
+        let state = self.state.clone();
         match event {
-            Event::Increment => self.count += 1,
-            Event::Decrement => self.count -= 1,
+            Event::Increment => {
+                let mut state = state.write().unwrap();
+                state.count += 1;
+                Updater::send_update(Update::CountChanged { count: state.count });
+            }
+            Event::Decrement => {
+                let mut state = state.write().unwrap();
+                state.count -= 1;
+                Updater::send_update(Update::CountChanged { count: state.count });
+            }
+            Event::TimerStart => {
+                let mut state = state.write().unwrap();
+                state.timer.active = true;
+                Updater::send_update(Update::Timer {
+                    state: state.timer.clone(),
+                });
+            }
+            Event::TimerPause => {
+                let mut state = state.write().unwrap();
+                state.timer.active = false;
+                Updater::send_update(Update::Timer {
+                    state: state.timer.clone(),
+                });
+            }
+            Event::TimerReset => {
+                let mut state = state.write().unwrap();
+                state.timer = TimerState::new();
+                Updater::send_update(Update::Timer {
+                    state: state.timer.clone(),
+                });
+            }
         }
-        // Reflect state update to the frontend
-        Updater::send_update(Update::CountChanged { count: self.count });
     }
 
     // FIXME(justin): if we only need one subscriber, we could move this logic to
@@ -94,6 +176,10 @@ impl App {
                 updater.update(field);
             }
         });
+    }
+
+    pub fn get_state(&self) -> AppState {
+        self.state.read().unwrap().clone()
     }
 }
 
@@ -120,6 +206,10 @@ impl FfiApp {
             .read()
             .expect("fixme")
             .listen_for_updates(updater);
+    }
+
+    pub fn get_state(&self) -> AppState {
+        self.inner().read().unwrap().get_state()
     }
 }
 
