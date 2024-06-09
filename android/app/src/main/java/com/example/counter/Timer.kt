@@ -6,15 +6,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.counter.ui.theme.CounterTheme
-import androidx.lifecycle.viewmodel.compose.viewModel
 import uniffi.counter.Event
 
 @Composable
-fun TimerApp(viewModel: com.example.counter.ViewModel = viewModel()) {
+fun Timer(viewModel: ViewModel) {
     val timer by viewModel.timer.collectAsState()
 
     Column(modifier = Modifier.padding(16.dp)) {
@@ -33,25 +30,17 @@ fun TimerApp(viewModel: com.example.counter.ViewModel = viewModel()) {
             horizontalArrangement = Arrangement.Center
         ) {
             if (timer.active) {
-                Button(onClick = { viewModel.dispatch(Event.TIMER_PAUSE) }) {
+                Button(onClick = { viewModel.dispatch(Event.TimerPause) }) {
                     Text(text = "Stop")
                 }
             } else {
-                Button(onClick = { viewModel.dispatch(Event.TIMER_START) }) {
+                Button(onClick = { viewModel.dispatch(Event.TimerStart) }) {
                     Text(text = "Start")
                 }
             }
-            Button(onClick = { viewModel.dispatch(Event.TIMER_RESET) }) {
+            Button(onClick = { viewModel.dispatch(Event.TimerReset) }) {
                 Text(text = "Reset")
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    CounterTheme {
-        TimerApp()
     }
 }

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import uniffi.counter.Event
 import uniffi.counter.FfiApp
 import uniffi.counter.FfiUpdater
+import uniffi.counter.Router
 import uniffi.counter.TimerState
 import uniffi.counter.Update
 
@@ -18,24 +19,36 @@ class ViewModel : ViewModel(), FfiUpdater  {
     private var _timer: MutableStateFlow<TimerState>
     val timer: StateFlow<TimerState> get() = _timer
 
+    private var _router: MutableStateFlow<Router>
+    val router: MutableStateFlow<Router> get() = _router
+
     init {
         rust.listenForUpdates(this)
 
         val state = rust.getState()
         _counter = MutableStateFlow(state.count)
         _timer = MutableStateFlow(state.timer)
+        _router = MutableStateFlow(state.router)
     }
 
     override fun update(update: Update) {
+        println("update $update")
         when (update) {
             is Update.CountChanged -> {
                 _counter.value = update.count
             }
             is Update.Timer -> {
-                println("timer" + update.state)
                 _timer.value = update.state
             }
+            is Update.RouterUpdate -> {
+                _router.value = update.router
+            }
         }
+        println(_counter.value)
+        println(_timer.value)
+        println(_router.value)
+        println()
+
     }
 
     fun dispatch(event: Event) {

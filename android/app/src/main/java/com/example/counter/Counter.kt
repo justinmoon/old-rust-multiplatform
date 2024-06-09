@@ -6,17 +6,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.counter.ViewModel
-import com.example.counter.ui.theme.CounterTheme
-import androidx.lifecycle.viewmodel.compose.viewModel
 import uniffi.counter.Event
 
 
 @Composable
-fun CounterApp(viewModel: ViewModel = viewModel()) {
+fun Counter(viewModel: ViewModel) {
     val count by viewModel.counter.collectAsState()
     Box(
         modifier = Modifier
@@ -28,7 +25,7 @@ fun CounterApp(viewModel: ViewModel = viewModel()) {
             horizontalArrangement = Arrangement.Center
         ) {
             Button(
-                onClick = { viewModel.dispatch(Event.DECREMENT) },
+                onClick = { viewModel.dispatch(Event.Decrement) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 modifier = Modifier
                     .size(64.dp)
@@ -43,7 +40,7 @@ fun CounterApp(viewModel: ViewModel = viewModel()) {
             )
 
             Button(
-                onClick = { viewModel.dispatch(Event.INCREMENT) },
+                onClick = { viewModel.dispatch(Event.Increment) },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
                 modifier = Modifier
                     .size(64.dp)
@@ -51,13 +48,5 @@ fun CounterApp(viewModel: ViewModel = viewModel()) {
                 Text("+", color = Color.White, fontSize = 32.sp)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    CounterTheme {
-        CounterApp()
     }
 }

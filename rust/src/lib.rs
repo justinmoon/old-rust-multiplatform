@@ -26,9 +26,9 @@ pub enum Event {
 #[derive(uniffi::Enum)]
 pub enum Update {
     CountChanged { count: i32 },
-    // FIXME: https://github.com/mozilla/uniffi-rs/issues/1853
     Timer { state: TimerState },
-    Router { router: Router },
+    // FIXME: https://github.com/mozilla/uniffi-rs/issues/1853
+    RouterUpdate { router: Router },
 }
 
 // FIXME(justin): this is more of an "event bus"
@@ -190,7 +190,7 @@ impl App {
             Event::SetRoute { route } => {
                 let mut state = state.write().unwrap();
                 state.router.route = route;
-                Updater::send_update(Update::Router {
+                Updater::send_update(Update::RouterUpdate {
                     router: state.router.clone(),
                 });
             }
