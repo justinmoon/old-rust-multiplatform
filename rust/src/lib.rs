@@ -5,11 +5,6 @@ use std::sync::{Arc, RwLock};
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
 
-#[uniffi::export]
-pub fn say_hi() -> String {
-    "Hello v2".to_string()
-}
-
 // globals.rs
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 static UPDATER: OnceCell<Updater> = OnceCell::new();
