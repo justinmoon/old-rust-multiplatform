@@ -10,10 +10,6 @@ import SwiftUI
 struct Timer: View {
     @State var rust: ViewModel;
     
-    public init() {
-        self.rust = ViewModel()
-    }
-    
     var body: some View {
         VStack {
             Text("\(self.rust.timer.elapsedSecs)")
@@ -43,6 +39,3 @@ struct Timer: View {
     }
 }
 
-#Preview {
-    Timer()
-}

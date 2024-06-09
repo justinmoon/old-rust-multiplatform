@@ -3,10 +3,6 @@ import SwiftUI
 struct Counter: View {
     @State var rust: ViewModel;
     
-    public init() {
-        self.rust = ViewModel()
-    }
-
     var body: some View {
         HStack {
             Button(action: {
@@ -39,9 +35,3 @@ struct Counter: View {
     }
 }
 
-struct Counter_Previews: PreviewProvider {
-    static var previews: some View {
-        Counter()
-    }
-}
-    

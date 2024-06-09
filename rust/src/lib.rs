@@ -20,6 +20,7 @@ pub enum Event {
     TimerStart,
     TimerPause,
     TimerReset,
+    SetRoute { route: Route },
 }
 
 #[derive(uniffi::Enum)]
@@ -27,6 +28,7 @@ pub enum Update {
     CountChanged { count: i32 },
     // FIXME: https://github.com/mozilla/uniffi-rs/issues/1853
     Timer { state: TimerState },
+    Router { router: Router },
 }
 
 // FIXME(justin): this is more of an "event bus"
@@ -72,10 +74,30 @@ impl TimerState {
     }
 }
 
+#[derive(Clone, uniffi::Enum)]
+pub enum Route {
+    Counter,
+    Timer,
+}
+
+#[derive(Clone, uniffi::Record)]
+pub struct Router {
+    route: Route,
+}
+
+impl Router {
+    pub fn new() -> Self {
+        Self {
+            route: Route::Counter,
+        }
+    }
+}
+
 #[derive(Clone, uniffi::Record)]
 pub struct AppState {
     count: i32,
     timer: TimerState,
+    router: Router,
 }
 
 impl AppState {
@@ -83,6 +105,7 @@ impl AppState {
         Self {
             count: 0,
             timer: TimerState::new(),
+            router: Router::new(),
         }
     }
 }
@@ -162,6 +185,13 @@ impl App {
                 state.timer = TimerState::new();
                 Updater::send_update(Update::Timer {
                     state: state.timer.clone(),
+                });
+            }
+            Event::SetRoute { route } => {
+                let mut state = state.write().unwrap();
+                state.router.route = route;
+                Updater::send_update(Update::Router {
+                    router: state.router.clone(),
                 });
             }
         }
