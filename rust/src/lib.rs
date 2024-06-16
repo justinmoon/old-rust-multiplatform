@@ -12,11 +12,10 @@ use once_cell::sync::OnceCell;
 
 use db::Database;
 
-// globals.rs
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 static UPDATER: OnceCell<Updater> = OnceCell::new();
 
-// events.rs
+// TODO: namespace these: counter, timer, router, etc.
 #[derive(uniffi::Enum)]
 pub enum Event {
     Increment,
@@ -29,7 +28,6 @@ pub enum Event {
 
 #[derive(uniffi::Enum)]
 pub enum Update {
-    CountChanged { count: i32 },
     Timer { state: TimerState },
     // FIXME: https://github.com/mozilla/uniffi-rs/issues/1853
     RouterUpdate { router: Router },
@@ -174,15 +172,9 @@ impl App {
         match event {
             Event::Increment => {
                 self.db.increment_state();
-                // let mut state = state.write().unwrap();
-                // state.count += 1;
-                // Updater::send_update(Update::CountChanged { count: state.count });
             }
             Event::Decrement => {
                 self.db.decrement_state();
-                // let mut state = state.write().unwrap();
-                // state.count -= 1;
-                // Updater::send_update(Update::CountChanged { count: state.count });
             }
             Event::TimerStart => {
                 let mut state = state.write().unwrap();

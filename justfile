@@ -1,3 +1,6 @@
+default:
+    just --list
+
 # env:
 #     export ANDROID_HOME=/Users/justin/Library/Android/sdk
 #     alias emulator=$ANDROID_HOME/emulator/emulator
@@ -15,8 +18,8 @@ build-android:
 run-android: build-android run-android-emulator
     bash scripts/run-android.sh
 
-build-ios:
-    bash scripts/build-ios.sh
+build-ios profile="debug":
+    bash scripts/build-ios.sh {{profile}}
 
 run-ios: build-ios
     bash scripts/run-ios.sh

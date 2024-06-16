@@ -40,10 +40,6 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
     override fun update(update: Update) {
         android.util.Log.d("DatabaseCheck", "update $update")
         when (update) {
-            is Update.CountChanged -> {
-                // sqlite now handles this
-                // _counter.value = update.count
-            }
             is Update.Timer -> {
                 _timer.value = update.state
             }
