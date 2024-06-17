@@ -1,6 +1,14 @@
 # Rust Multiplatform
 
-### Getting Started
+## Getting Started
+
+### Install Dependencies
+
+```
+brew install just watchexec
+```
+
+### Build and App
 
 To run the app on Android:
 
