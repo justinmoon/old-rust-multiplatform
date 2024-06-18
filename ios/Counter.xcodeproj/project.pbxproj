@@ -19,7 +19,7 @@
 
 /* Begin PBXFileReference section */
 		D000B2EF2C0F7BAA00E32143 /* Counter.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Counter.xcframework; path = ../rust/ios/Counter.xcframework; sourceTree = "<group>"; };
-		D000B2F12C0F7BB100E32143 /* Counter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Counter.swift; path = ../../rust/ios/TodoList/Counter.swift; sourceTree = "<group>"; };
+		D000B2F12C0F7BB100E32143 /* Counter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Counter.swift; path = ../../rust/ios/Counter/Counter.swift; sourceTree = "<group>"; };
 		D0245F4C2C0F7B4E0042B447 /* Counter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Counter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0245F4F2C0F7B4E0042B447 /* CounterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CounterApp.swift; sourceTree = "<group>"; };
 		D0245F512C0F7B4E0042B447 /* CounterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CounterView.swift; sourceTree = "<group>"; };
@@ -88,6 +88,7 @@
 			buildConfigurationList = D0245F5A2C0F7B500042B447 /* Build configuration list for PBXNativeTarget "Counter" */;
 			buildPhases = (
 				D0245F482C0F7B4E0042B447 /* Sources */,
+				ACC301632C1F3F8F006790DF /* Build xcframework */,
 				D0245F492C0F7B4E0042B447 /* Frameworks */,
 				D0245F4A2C0F7B4E0042B447 /* Resources */,
 			);
@@ -144,6 +145,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		ACC301632C1F3F8F006790DF /* Build xcframework */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Build xcframework";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nexport PATH=\"$PATH:$HOME/.cargo/bin:/opt/homebrew/bin\"\ncd ../\n\nif [ ! which cargo ]; then\n echo \"Cargo not available in path\" >> log.txt\nfi\n\nif [ ! which just ]; then\n echo \"Just not available in path\" >> log.txt\nfi\n\nif [ ! which rustup ]; then\n echo \"Rustup not available in path\" >> log.txt\nfi\n\n# Redirect all stdout and stderr to the log file for debugging\n# LOG_FILE=\"log.txt\"\n# exec > >(tee -a \"$LOG_FILE\")\n# exec 2>&1\n\nbash scripts/build-ios.sh debug\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		D0245F482C0F7B4E0042B447 /* Sources */ = {
