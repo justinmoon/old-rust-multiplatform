@@ -1,6 +1,7 @@
 package com.example.counter
 
 import android.content.Context
+import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,6 +13,8 @@ import uniffi.counter.TimerState
 import uniffi.counter.Update
 
 class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
+    val databaseHelper = DatabaseHelper(context);
+
     private val rust: FfiApp
 
     private var _counter: MutableStateFlow<Int>
@@ -23,19 +26,23 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
     private var _router: MutableStateFlow<Router>
     val router: MutableStateFlow<Router> get() = _router
 
+    private var _state: MutableStateFlow<String>
+    val state: StateFlow<String> get() = _state
+
     init {
         val dataDir = context.filesDir.absolutePath
         rust = FfiApp(dataDir)
         rust.listenForUpdates(this)
 
-        val state = rust.getState()
-        _counter = MutableStateFlow(state.count)
-        _timer = MutableStateFlow(state.timer)
-        _router = MutableStateFlow(state.router)
+        val rustState = rust.getState()
+        _counter = MutableStateFlow(rustState.count)
+        _timer = MutableStateFlow(rustState.timer)
+        _router = MutableStateFlow(rustState.router)
+        _state = MutableStateFlow(databaseHelper.getState())
     }
 
     override fun update(update: Update) {
-        println("update $update")
+        android.util.Log.d("DatabaseCheck", "update $update")
         when (update) {
             is Update.CountChanged -> {
                 _counter.value = update.count
@@ -46,12 +53,10 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
             is Update.RouterUpdate -> {
                 _router.value = update.router
             }
+            is Update.DatabaseUpdate -> {
+                _state.value = databaseHelper.getState();
+            }
         }
-        println(_counter.value)
-        println(_timer.value)
-        println(_router.value)
-        println()
-
     }
 
     fun dispatch(event: Event) {

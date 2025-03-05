@@ -33,6 +33,8 @@ pub enum Update {
     Timer { state: TimerState },
     // FIXME: https://github.com/mozilla/uniffi-rs/issues/1853
     RouterUpdate { router: Router },
+    // TODO: include all the update info
+    DatabaseUpdate,
 }
 
 // FIXME(justin): this is more of an "event bus"
@@ -125,6 +127,10 @@ pub struct App {
 impl App {
     /// Create a new instance of the app
     pub fn new(ffi_app: &FfiApp) -> Self {
+        android_logger::init_once(
+            android_logger::Config::default().with_min_level(log::Level::Info),
+        );
+
         let (sender, receiver): (Sender<Update>, Receiver<Update>) = unbounded();
         Updater::init(sender);
         let state = Arc::new(RwLock::new(AppState::new()));
@@ -146,7 +152,7 @@ impl App {
         let db = Database::new(ffi_app.data_dir.clone()).expect("FIXME");
 
         // db.update_state("hello, world!").expect("FIXME");
-        db.update_state_loop();
+        db.listen_for_updates();
 
         Self {
             update_receiver: Arc::new(receiver),
@@ -167,9 +173,10 @@ impl App {
         let state = self.state.clone();
         match event {
             Event::Increment => {
-                let mut state = state.write().unwrap();
-                state.count += 1;
-                Updater::send_update(Update::CountChanged { count: state.count });
+                self.db.increment_state();
+                // let mut state = state.write().unwrap();
+                // state.count += 1;
+                // Updater::send_update(Update::CountChanged { count: state.count });
             }
             Event::Decrement => {
                 let mut state = state.write().unwrap();

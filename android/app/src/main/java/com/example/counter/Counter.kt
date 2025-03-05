@@ -15,31 +15,32 @@ import com.example.counter.DatabaseHelper
 import android.os.FileObserver
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
+import androidx.compose.runtime.collectAsState
 
 @Composable
 fun Counter(viewModel: ViewModel) {
     val context = LocalContext.current
-    val databaseHelper = remember { DatabaseHelper(context) }
-    val state = remember { mutableStateOf("") }
+    // val databaseHelper = remember { DatabaseHelper(context) }
+    val state = viewModel.state.collectAsState().value
 
     // Manual reloading logic using FileObserver
-    val databaseFile = File(context.filesDir, "app_state.db")
-    val lastModified = remember { MutableStateFlow(databaseFile.lastModified()) }
+    // val databaseFile = File(context.filesDir, "app_state.db")
+    // val lastModified = remember { MutableStateFlow(databaseFile.lastModified()) }
 
-    DisposableEffect(Unit) {
-        val observer = object : FileObserver(databaseFile.path, MODIFY) {
-            override fun onEvent(event: Int, path: String?) {
-                if (event == MODIFY) {
-                    state.value = databaseHelper.getState()
-                }
-            }
-        }
-        observer.startWatching()
+    // DisposableEffect(Unit) {
+    //     val observer = object : FileObserver(databaseFile.path, MODIFY) {
+    //         override fun onEvent(event: Int, path: String?) {
+    //             if (event == MODIFY) {
+    //                 viewModel._state.value = databaseHelper.getState()
+    //             }
+    //         }
+    //     }
+    //     observer.startWatching()
 
-        onDispose {
-            observer.stopWatching()
-        }
-    }
+    //     onDispose {
+    //         observer.stopWatching()
+    //     }
+    // }
 
     Box(
         modifier = Modifier
@@ -81,7 +82,7 @@ fun Counter(viewModel: ViewModel) {
 
             // Display the state from the database
             Text(
-                text = "Counter: ${state.value}",
+                text = "Counter: $state",
                 fontSize = 24.sp,
                 modifier = Modifier.padding(top = 16.dp)
             )

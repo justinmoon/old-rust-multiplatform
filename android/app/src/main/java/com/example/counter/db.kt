@@ -21,11 +21,11 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, context.files
 
     fun getState(): String {
         // FIXME: brittle initialization code that only matters first time we run
-        try {
-            Thread.sleep(100)
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
-        }
+//        try {
+//            Thread.sleep(100)
+//        } catch (e: InterruptedException) {
+//            e.printStackTrace()
+//        }
         val db = this.readableDatabase
         val cursor = db.rawQuery("SELECT state FROM app_state ORDER BY id DESC LIMIT 1", null)
         return if (cursor.moveToFirst()) {
