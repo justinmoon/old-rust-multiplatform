@@ -145,7 +145,8 @@ impl App {
         });
         let db = Database::new(ffi_app.data_dir.clone()).expect("FIXME");
 
-        db.update_state("hello, world!").expect("FIXME");
+        // db.update_state("hello, world!").expect("FIXME");
+        db.update_state_loop();
 
         Self {
             update_receiver: Arc::new(receiver),

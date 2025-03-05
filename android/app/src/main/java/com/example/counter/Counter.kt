@@ -11,18 +11,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.counter.ViewModel
 import uniffi.counter.Event
-import com.example.counter.DatabaseHelper // Import your DatabaseHelper
+import com.example.counter.DatabaseHelper
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import java.io.File
 
 @Composable
 fun Counter(viewModel: ViewModel) {
-    val count by viewModel.counter.collectAsState()
     val context = LocalContext.current
     val databaseHelper = remember { DatabaseHelper(context) }
     val state = remember { mutableStateOf("") }
 
-    // Read the state from the database
+    // Manual reloading logic
+    val databaseFile = File(context.filesDir, "app_state.db")
+    val lastModified = remember { MutableStateFlow(databaseFile.lastModified()) }
+
     LaunchedEffect(Unit) {
-        state.value = databaseHelper.getState()
+        while (isActive) {
+            val newModified = databaseFile.lastModified()
+            if (newModified > lastModified.value) {
+                lastModified.value = newModified
+                state.value = databaseHelper.getState()
+            }
+            delay(100) // Check every 100ms
+        }
     }
 
     Box(
@@ -48,7 +60,7 @@ fun Counter(viewModel: ViewModel) {
                 }
 
                 Text(
-                    text = "$count",
+                    text = "${viewModel.counter.collectAsState().value}",
                     fontSize = 32.sp,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
@@ -65,7 +77,7 @@ fun Counter(viewModel: ViewModel) {
 
             // Display the state from the database
             Text(
-                text = "State: ${state.value}",
+                text = "Counter: ${state.value}",
                 fontSize = 24.sp,
                 modifier = Modifier.padding(top = 16.dp)
             )
