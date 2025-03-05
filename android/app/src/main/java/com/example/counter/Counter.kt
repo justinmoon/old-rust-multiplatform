@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.sp
 import com.example.counter.ViewModel
 import uniffi.counter.Event
 import com.example.counter.DatabaseHelper
-import kotlinx.coroutines.*
+import android.os.FileObserver
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File
 
@@ -22,18 +22,22 @@ fun Counter(viewModel: ViewModel) {
     val databaseHelper = remember { DatabaseHelper(context) }
     val state = remember { mutableStateOf("") }
 
-    // Manual reloading logic
+    // Manual reloading logic using FileObserver
     val databaseFile = File(context.filesDir, "app_state.db")
     val lastModified = remember { MutableStateFlow(databaseFile.lastModified()) }
 
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            val newModified = databaseFile.lastModified()
-            if (newModified > lastModified.value) {
-                lastModified.value = newModified
-                state.value = databaseHelper.getState()
+    DisposableEffect(Unit) {
+        val observer = object : FileObserver(databaseFile.path, MODIFY) {
+            override fun onEvent(event: Int, path: String?) {
+                if (event == MODIFY) {
+                    state.value = databaseHelper.getState()
+                }
             }
-            delay(100) // Check every 100ms
+        }
+        observer.startWatching()
+
+        onDispose {
+            observer.stopWatching()
         }
     }
 

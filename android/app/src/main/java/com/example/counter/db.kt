@@ -20,7 +20,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, context.files
     }
 
     fun getState(): String {
-        // FIXME
+        // FIXME: brittle initialization code that only matters first time we run
         try {
             Thread.sleep(100)
         } catch (e: InterruptedException) {
