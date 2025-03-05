@@ -20,37 +20,13 @@ import androidx.compose.runtime.collectAsState
 @Composable
 fun Counter(viewModel: ViewModel) {
     val context = LocalContext.current
-    // val databaseHelper = remember { DatabaseHelper(context) }
-    val state = viewModel.state.collectAsState().value
-
-    // Manual reloading logic using FileObserver
-    // val databaseFile = File(context.filesDir, "app_state.db")
-    // val lastModified = remember { MutableStateFlow(databaseFile.lastModified()) }
-
-    // DisposableEffect(Unit) {
-    //     val observer = object : FileObserver(databaseFile.path, MODIFY) {
-    //         override fun onEvent(event: Int, path: String?) {
-    //             if (event == MODIFY) {
-    //                 viewModel._state.value = databaseHelper.getState()
-    //             }
-    //         }
-    //     }
-    //     observer.startWatching()
-
-    //     onDispose {
-    //         observer.stopWatching()
-    //     }
-    // }
+    val counter = viewModel.counter.collectAsState().value
 
     Box(
         modifier = Modifier
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
@@ -65,7 +41,7 @@ fun Counter(viewModel: ViewModel) {
                 }
 
                 Text(
-                    text = "${viewModel.counter.collectAsState().value}",
+                    text = "${counter}",
                     fontSize = 32.sp,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
@@ -79,13 +55,5 @@ fun Counter(viewModel: ViewModel) {
                     Text("+", color = Color.White, fontSize = 32.sp)
                 }
             }
-
-            // Display the state from the database
-            Text(
-                text = "Counter: $state",
-                fontSize = 24.sp,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-        }
     }
 }

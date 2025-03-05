@@ -152,7 +152,7 @@ impl App {
         let db = Database::new(ffi_app.data_dir.clone()).expect("FIXME");
 
         // db.update_state("hello, world!").expect("FIXME");
-        db.listen_for_updates();
+        // db.listen_for_updates();
 
         Self {
             update_receiver: Arc::new(receiver),
@@ -179,9 +179,10 @@ impl App {
                 // Updater::send_update(Update::CountChanged { count: state.count });
             }
             Event::Decrement => {
-                let mut state = state.write().unwrap();
-                state.count -= 1;
-                Updater::send_update(Update::CountChanged { count: state.count });
+                self.db.decrement_state();
+                // let mut state = state.write().unwrap();
+                // state.count -= 1;
+                // Updater::send_update(Update::CountChanged { count: state.count });
             }
             Event::TimerStart => {
                 let mut state = state.write().unwrap();

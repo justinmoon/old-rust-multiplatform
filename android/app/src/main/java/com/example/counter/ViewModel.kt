@@ -17,8 +17,8 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
 
     private val rust: FfiApp
 
-    private var _counter: MutableStateFlow<Int>
-    val counter: StateFlow<Int> get() = _counter
+    private var _counter: MutableStateFlow<String>
+    val counter: StateFlow<String> get() = _counter
 
     private var _timer: MutableStateFlow<TimerState>
     val timer: StateFlow<TimerState> get() = _timer
@@ -26,26 +26,23 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
     private var _router: MutableStateFlow<Router>
     val router: MutableStateFlow<Router> get() = _router
 
-    private var _state: MutableStateFlow<String>
-    val state: StateFlow<String> get() = _state
-
     init {
         val dataDir = context.filesDir.absolutePath
         rust = FfiApp(dataDir)
         rust.listenForUpdates(this)
 
         val rustState = rust.getState()
-        _counter = MutableStateFlow(rustState.count)
         _timer = MutableStateFlow(rustState.timer)
         _router = MutableStateFlow(rustState.router)
-        _state = MutableStateFlow(databaseHelper.getState())
+        _counter = MutableStateFlow(databaseHelper.getState())
     }
 
     override fun update(update: Update) {
         android.util.Log.d("DatabaseCheck", "update $update")
         when (update) {
             is Update.CountChanged -> {
-                _counter.value = update.count
+                // sqlite now handles this
+                // _counter.value = update.count
             }
             is Update.Timer -> {
                 _timer.value = update.state
@@ -54,7 +51,7 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
                 _router.value = update.router
             }
             is Update.DatabaseUpdate -> {
-                _state.value = databaseHelper.getState();
+                _counter.value = databaseHelper.getState();
             }
         }
     }
