@@ -1,5 +1,7 @@
 uniffi::setup_scaffolding!();
 
+mod db;
+
 use std::{
     sync::{Arc, RwLock},
     time::Duration,
@@ -7,6 +9,8 @@ use std::{
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
+
+use db::Database;
 
 // globals.rs
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
@@ -115,11 +119,12 @@ pub struct App {
     state: Arc<RwLock<AppState>>,
     update_receiver: Arc<Receiver<Update>>,
     handle: Arc<std::thread::JoinHandle<()>>,
+    db: Database,
 }
 
 impl App {
     /// Create a new instance of the app
-    pub fn new() -> Self {
+    pub fn new(ffi_app: &FfiApp) -> Self {
         let (sender, receiver): (Sender<Update>, Receiver<Update>) = unbounded();
         Updater::init(sender);
         let state = Arc::new(RwLock::new(AppState::new()));
@@ -138,17 +143,21 @@ impl App {
                 state: state.timer.clone(),
             });
         });
+        let db = Database::new(ffi_app.data_dir.clone()).expect("FIXME");
+
+        db.update_state("hello, world!").expect("FIXME");
 
         Self {
             update_receiver: Arc::new(receiver),
             state,
             handle: Arc::new(handle),
+            db,
         }
     }
 
     /// Fetch global instance of the app, or create one if it doesn't exist
-    pub fn global() -> &'static RwLock<App> {
-        APP.get_or_init(|| RwLock::new(App::new()))
+    pub fn global(ffi_app: &FfiApp) -> &'static RwLock<App> {
+        APP.get_or_init(|| RwLock::new(App::new(ffi_app)))
     }
 
     /// Handle event received from frontend
@@ -215,14 +224,16 @@ impl App {
 
 /// Representation of our app over FFI. Essentially a wrapper of [`App`].
 #[derive(uniffi::Object)]
-pub struct FfiApp;
+pub struct FfiApp {
+    data_dir: String,
+}
 
 #[uniffi::export]
 impl FfiApp {
     /// FFI constructor which wraps in an Arc
     #[uniffi::constructor]
-    pub fn new() -> Arc<Self> {
-        Arc::new(Self)
+    pub fn new(data_dir: String) -> Arc<Self> {
+        Arc::new(Self { data_dir })
     }
 
     /// Frontend calls this method to send events to the rust application logic
@@ -246,6 +257,6 @@ impl FfiApp {
 impl FfiApp {
     /// Fetch global instance of the app, or create one if it doesn't exist
     fn inner(&self) -> &RwLock<App> {
-        App::global()
+        App::global(self)
     }
 }

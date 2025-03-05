@@ -1,5 +1,6 @@
 package com.example.counter
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,8 +11,8 @@ import uniffi.counter.Router
 import uniffi.counter.TimerState
 import uniffi.counter.Update
 
-class ViewModel : ViewModel(), FfiUpdater  {
-    private val rust: FfiApp = FfiApp()
+class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
+    private val rust: FfiApp
 
     private var _counter: MutableStateFlow<Int>
     val counter: StateFlow<Int> get() = _counter
@@ -23,6 +24,8 @@ class ViewModel : ViewModel(), FfiUpdater  {
     val router: MutableStateFlow<Router> get() = _router
 
     init {
+        val dataDir = context.filesDir.absolutePath
+        rust = FfiApp(dataDir)
         rust.listenForUpdates(this)
 
         val state = rust.getState()
