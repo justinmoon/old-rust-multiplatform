@@ -7,6 +7,12 @@ struct AppNavigation: View {
     @State private var showErrorScreen = false
     @State private var successMessage = "Transaction completed successfully!"
     @State private var errorMessage = "Transaction failed. Please try again."
+    @State private var screenStack: [AppScreen] = []
+
+    // Public initializer
+    init(rust: ViewModel) {
+        self._rust = State(initialValue: rust)
+    }
 
     var body: some View {
         TabView(selection: tabSelection) {
@@ -111,25 +117,13 @@ struct AppNavigation: View {
     }
 
     private func updateNavigationPath(to screen: AppScreen) {
-        // If there's no navigation yet, just push the screen
-        if navigationPath.isEmpty {
-            navigationPath.append(screen)
+        // Check if the last screen is the same as the one we want to navigate to
+        if let lastScreen = screenStack.last, lastScreen == screen {
             return
         }
 
-        // Get current screens in path
-        var screens: [AppScreen] = []
-        for i in 0..<navigationPath.count {
-            if let screen = navigationPath.path[i] as? AppScreen {
-                screens.append(screen)
-            }
-        }
-
-        // If the last screen is the same as the one we want to navigate to, don't add it again
-        if let lastScreen = screens.last, lastScreen == screen {
-            return
-        }
-
+        // Update the screen stack and navigation path
+        screenStack.append(screen)
         navigationPath.append(screen)
     }
 }
