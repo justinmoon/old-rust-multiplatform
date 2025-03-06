@@ -11,116 +11,93 @@ struct AppNavigation: View {
     // Public initializer
     init(rust: ViewModel) {
         self._rust = State(initialValue: rust)
+        print("AppNavigation initialized with ViewModel ID: \(ObjectIdentifier(rust))")
     }
 
     var body: some View {
-        NavigationStack {
-            HomeView(rust: rust)
-                .overlay(
-                    Group {
-                        // Conditionally show the appropriate view based on current route
-                        //                        if rust.router.route != .home {
-                        // Add debug view right before the switch
-                        Text("Debug: \(String(describing: rust.router.route))")
-                            .font(.caption)
-                            .padding(4)
-                            .background(Color.yellow.opacity(0.5))
-                            .cornerRadius(4)
-
-                        switch rust.router.route {
-                        case .mint:
-                            NavigationLink(
-                                destination:
-                                    MintView(rust: rust)
-                                    .toolbar {
-                                        ToolbarItem(placement: .navigationBarLeading) {
-                                            Button {
-                                                // Pop route in Rust
-                                                rust.dispatch(event: .popRoute)
-                                            } label: {
-                                                Image(systemName: "chevron.left")
-                                                    .imageScale(.large)
-                                            }
-                                        }
-                                    },
-                                isActive: .constant(true)
-                            ) { EmptyView() }
-                        case .mintAmount:
-                            NavigationLink(
-                                destination:
-                                    MintAmountView(rust: rust)
-                                    .toolbar {
-                                        ToolbarItem(placement: .navigationBarLeading) {
-                                            Button {
-                                                // Pop route in Rust
-                                                rust.dispatch(event: .popRoute)
-                                            } label: {
-                                                Image(systemName: "chevron.left")
-                                                    .imageScale(.large)
-                                            }
-                                        }
-                                    },
-                                isActive: .constant(true)
-                            ) { EmptyView() }
-                        case .mintConfirm:
-                            NavigationLink(
-                                destination:
-                                    MintConfirmView(rust: rust)
-                                    .toolbar {
-                                        ToolbarItem(placement: .navigationBarLeading) {
-                                            Button {
-                                                // Pop route in Rust
-                                                rust.dispatch(event: .popRoute)
-                                            } label: {
-                                                Image(systemName: "chevron.left")
-                                                    .imageScale(.large)
-                                            }
-                                        }
-                                    },
-                                isActive: .constant(true)
-                            ) { EmptyView() }
-                        case .melt:
-                            NavigationLink(
-                                destination:
-                                    MeltView(rust: rust)
-                                    .toolbar {
-                                        ToolbarItem(placement: .navigationBarLeading) {
-                                            Button {
-                                                // Pop route in Rust
-                                                rust.dispatch(event: .popRoute)
-                                            } label: {
-                                                Image(systemName: "chevron.left")
-                                                    .imageScale(.large)
-                                            }
-                                        }
-                                    },
-                                isActive: .constant(true)
-                            ) { EmptyView() }
-                        case .meltConfirm:
-                            NavigationLink(
-                                destination:
-                                    MeltConfirmView(rust: rust)
-                                    .toolbar {
-                                        ToolbarItem(placement: .navigationBarLeading) {
-                                            Button {
-                                                // Pop route in Rust
-                                                rust.dispatch(event: .popRoute)
-                                            } label: {
-                                                Image(systemName: "chevron.left")
-                                                    .imageScale(.large)
-                                            }
-                                        }
-                                    },
-                                isActive: .constant(true)
-                            ) { EmptyView() }
-                        default:
-                            EmptyView()
-                        //                                MintView(rust: rust)
-
-                        }
-                        //                        }
+        NavigationStack(
+            path: Binding(
+                get: {
+                    // Convert rust.router.route to NavigationPath
+                    if rust.router.route != .home {
+                        return [rust.router.route]
+                    } else {
+                        return []
                     }
-                )
+                },
+                set: { _ in
+                    // Intentionally empty - we don't allow setting this way
+                    // All navigation must go through Rust
+                }
+            )
+        ) {
+            HomeView(rust: rust)
+                .navigationDestination(for: Route.self) { route in
+                    switch route {
+                    case .mint:
+                        MintView(rust: rust)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button {
+                                        rust.dispatch(event: .popRoute)
+                                    } label: {
+                                        Image(systemName: "chevron.left")
+                                            .imageScale(.large)
+                                    }
+                                }
+                            }
+                    case .mintAmount:
+                        MintAmountView(rust: rust)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button {
+                                        rust.dispatch(event: .popRoute)
+                                    } label: {
+                                        Image(systemName: "chevron.left")
+                                            .imageScale(.large)
+                                    }
+                                }
+                            }
+                    case .mintConfirm:
+                        MintConfirmView(rust: rust)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button {
+                                        rust.dispatch(event: .popRoute)
+                                    } label: {
+                                        Image(systemName: "chevron.left")
+                                            .imageScale(.large)
+                                    }
+                                }
+                            }
+                    case .melt:
+                        MeltView(rust: rust)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button {
+                                        rust.dispatch(event: .popRoute)
+                                    } label: {
+                                        Image(systemName: "chevron.left")
+                                            .imageScale(.large)
+                                    }
+                                }
+                            }
+                    case .meltConfirm:
+                        MeltConfirmView(rust: rust)
+                            .toolbar {
+                                ToolbarItem(placement: .navigationBarLeading) {
+                                    Button {
+                                        rust.dispatch(event: .popRoute)
+                                    } label: {
+                                        Image(systemName: "chevron.left")
+                                            .imageScale(.large)
+                                    }
+                                }
+                            }
+                    default:
+                        EmptyView()
+                    }
+                }
         }
         .onChange(of: rust.router.route) { _, newRoute in
             // Handle special routes
@@ -165,6 +142,11 @@ struct AppNavigation: View {
 
 struct HomeView: View {
     @State var rust: ViewModel
+
+    init(rust: ViewModel) {
+        self._rust = State(initialValue: rust)
+        print("HomeView initialized with ViewModel ID: \(ObjectIdentifier(rust))")
+    }
 
     var body: some View {
         VStack {
