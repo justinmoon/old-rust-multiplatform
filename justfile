@@ -5,7 +5,7 @@ default:
 #     export ANDROID_HOME=/Users/justin/Library/Android/sdk
 #     alias emulator=$ANDROID_HOME/emulator/emulator
 
-run-android-emulator:
+run-emulator:
     # FIRST_AVD=$(/Users/justin/Library/Android/sdk/emulator/emulator -list-avds | head -n 1)
     # echo "Starting emulator $FIRST_AVD"
     /Users/justin/Library/Android/sdk/emulator/emulator -avd Pixel_3a_API_34_extension_level_7_arm64-v8a &
@@ -15,8 +15,11 @@ run-android-emulator:
 build-android:
     bash scripts/build-android.sh
 
-run-android: build-android run-android-emulator
+run-android: build-android
     bash scripts/run-android.sh
+
+run-simulator:
+    open -a Simulator
 
 build-ios profile="debug":
     bash scripts/build-ios.sh {{profile}}
