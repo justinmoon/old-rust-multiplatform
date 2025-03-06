@@ -85,7 +85,7 @@ impl App {
     /// Get the router by querying the database directly
     pub fn get_router(&self) -> Router {
         // Use Router's from_database method
-        Router::from_database()
+        Router::from_database(&self.db).unwrap()
     }
 
     /// Get the current route by querying the database

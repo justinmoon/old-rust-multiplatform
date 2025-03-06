@@ -2,7 +2,7 @@ import Counter
 import SwiftUI
 
 struct AppNavigation: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
     @State private var showErrorScreen = false
     @State private var showSuccessScreen = false
     @State private var successMessage = "Transaction completed successfully!"
@@ -10,12 +10,12 @@ struct AppNavigation: View {
 
     // Public initializer
     init(rust: ViewModel) {
-        self._rust = State(initialValue: rust)
+        self.rust = rust
         print("AppNavigation initialized with ViewModel ID: \(ObjectIdentifier(rust))")
     }
 
     var body: some View {
-        NavigationStack(path: Binding.constant(rust.router.routes)) {
+        NavigationStack(path: $rust.navigationPath) {
             // Main home view
             HomeView(rust: rust)
                 // Define navigation destinations for each route type
@@ -92,13 +92,16 @@ struct AppNavigation: View {
                 }
         }
         .onChange(of: rust.currentRoute) { _, newRoute in
-            // Handle special routes
-            if newRoute == .success {
-                // Show success screen
-                showSuccessScreen = true
-            } else if newRoute == .error {
-                // Show error screen
-                showErrorScreen = true
+            // Unwrap the optional route before using it
+            if let newRoute = newRoute {
+                // Handle special routes
+                if newRoute == .success {
+                    // Show success screen
+                    showSuccessScreen = true
+                } else if newRoute == .error {
+                    // Show error screen
+                    showErrorScreen = true
+                }
             }
         }
         .fullScreenCover(isPresented: $showErrorScreen) {
@@ -127,10 +130,10 @@ struct AppNavigation: View {
 // MARK: - View Implementations
 
 struct HomeView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
 
     init(rust: ViewModel) {
-        self._rust = State(initialValue: rust)
+        self.rust = rust
         print("HomeView initialized with ViewModel ID: \(ObjectIdentifier(rust))")
     }
 
@@ -171,7 +174,11 @@ struct HomeView: View {
 }
 
 struct TransactionHistoryView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
+
+    init(rust: ViewModel) {
+        self.rust = rust
+    }
 
     var body: some View {
         List {
@@ -185,7 +192,11 @@ struct TransactionHistoryView: View {
 }
 
 struct MintView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
+
+    init(rust: ViewModel) {
+        self.rust = rust
+    }
 
     var body: some View {
         VStack {
@@ -214,8 +225,12 @@ struct MintView: View {
 }
 
 struct MintAmountView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
     @State private var amount: String = "12"
+
+    init(rust: ViewModel) {
+        self.rust = rust
+    }
 
     var body: some View {
         VStack {
@@ -241,7 +256,11 @@ struct MintAmountView: View {
 }
 
 struct MintConfirmView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
+
+    init(rust: ViewModel) {
+        self.rust = rust
+    }
 
     var body: some View {
         VStack {
@@ -269,7 +288,11 @@ struct MintConfirmView: View {
 }
 
 struct MeltView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
+
+    init(rust: ViewModel) {
+        self.rust = rust
+    }
 
     var body: some View {
         VStack {
@@ -303,7 +326,11 @@ struct MeltView: View {
 }
 
 struct MeltConfirmView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
+
+    init(rust: ViewModel) {
+        self.rust = rust
+    }
 
     var body: some View {
         VStack {
@@ -340,9 +367,15 @@ struct MeltConfirmView: View {
 }
 
 struct SuccessView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
     var message: String
     var onDismiss: () -> Void
+
+    init(rust: ViewModel, message: String, onDismiss: @escaping () -> Void) {
+        self.rust = rust
+        self.message = message
+        self.onDismiss = onDismiss
+    }
 
     var body: some View {
         VStack {
@@ -381,10 +414,19 @@ struct SuccessView: View {
 }
 
 struct ErrorView: View {
-    @State var rust: ViewModel
+    @Bindable var rust: ViewModel
     var error: String
     var onRetry: () -> Void
     var onQuit: () -> Void
+
+    init(
+        rust: ViewModel, error: String, onRetry: @escaping () -> Void, onQuit: @escaping () -> Void
+    ) {
+        self.rust = rust
+        self.error = error
+        self.onRetry = onRetry
+        self.onQuit = onQuit
+    }
 
     var body: some View {
         VStack {

@@ -13,11 +13,7 @@ import SwiftUI
     var count: String
     var currentRoute: Route?
     var router: Router
-
-    // Computed property to provide array of routes for SwiftUI NavigationStack
-    var navigationPath: [Route] {
-        return router.routes
-    }
+    var navigationPath: [Route] = []
 
     public init() {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
@@ -28,6 +24,7 @@ import SwiftUI
         self.rust = rust
         self.currentRoute = rust.getCurrentRoute()
         self.router = rust.getRouter()
+        self.navigationPath = self.router.routes
 
         self.rust.listenForUpdates(updater: self)
     }
@@ -38,6 +35,8 @@ import SwiftUI
             self.count = db.getCounter()
             self.currentRoute = rust.getCurrentRoute()
             self.router = rust.getRouter()
+            self.navigationPath = self.router.routes
+            print("navigation path", self.navigationPath)
         }
     }
 

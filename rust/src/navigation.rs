@@ -1,4 +1,5 @@
 use crate::Database;
+use core::panic;
 use once_cell::sync::OnceCell;
 use rusqlite::{
     types::ValueRef,
@@ -82,17 +83,20 @@ impl Router {
     /// Create a Router by querying the database
     /// Note: This is a regular function, not exposed via FFI
     /// Use FfiDatabase.get_router() instead for FFI
-    pub fn from_database() -> Self {
-        // Get the database from the global DATABASE variable
-        if let Some(db_lock) = DATABASE.get() {
-            if let Ok(db) = db_lock.read() {
-                if let Ok(routes) = get_routes_from_db(&db) {
-                    return Self { routes };
-                }
-            }
-        }
-        // Return empty router if anything fails
-        Self::new()
+    pub fn from_database(db: &Database) -> Result<Self> {
+        // // Get the database from the global DATABASE variable
+        // if let Some(db_lock) = DATABASE.get() {
+        //     if let Ok(db) = db_lock.read() {
+        //         if let Ok(routes) = get_routes_from_db(&db) {
+        //             return Self { routes };
+        //         }
+        //     }
+        // }
+        // // Return empty router if anything fails
+        // // panic!("Failed to get routes from database");
+        // Self::new()
+        let routes = get_routes_from_db(db)?;
+        Ok(Self { routes })
     }
 
     /// Get the current route (top of the stack)

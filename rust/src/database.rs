@@ -171,7 +171,7 @@ impl Database {
 
     /// Get the router
     pub fn get_router(&self) -> Router {
-        Router::from_database()
+        Router::from_database(self).unwrap()
     }
 
     /// Get just the routes from the router
@@ -202,7 +202,7 @@ impl FfiDatabase {
 
     /// Get the router
     pub fn get_router(&self) -> Router {
-        Router::from_database()
+        Router::from_database(&self.get_database()).unwrap()
     }
 
     /// Get just the routes from the router
