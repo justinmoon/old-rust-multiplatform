@@ -23,7 +23,7 @@ class Database {
         sqlite3_close(db)
     }
 
-    func getState() -> String {
+    func getCounter() -> String {
         let query = "SELECT state FROM app_state ORDER BY id DESC LIMIT 1"
         var queryStatement: OpaquePointer?
         var state = ""

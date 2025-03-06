@@ -1,7 +1,6 @@
 package com.example.counter
 
 import android.content.Context
-import androidx.compose.runtime.remember
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +28,7 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
 
         val rustState = rust.getState()
         _router = MutableStateFlow(rustState.router)
-        _counter = MutableStateFlow(db.getState())
+        _counter = MutableStateFlow(db.getCounter())
     }
 
     override fun update(update: Update) {
@@ -39,7 +38,7 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
                 _router.value = update.router
             }
             is Update.DatabaseUpdate -> {
-                _counter.value = db.getState();
+                _counter.value = db.getCounter();
             }
         }
     }

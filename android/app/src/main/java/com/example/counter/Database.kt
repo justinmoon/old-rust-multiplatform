@@ -14,7 +14,7 @@ class Database(context: Context) : SQLiteOpenHelper(context, context.filesDir.re
         // Handle database upgrade if needed
     }
 
-    fun getState(): String {
+    fun getCounter(): String {
         val db = this.readableDatabase
         val cursor = db.rawQuery("SELECT state FROM app_state ORDER BY id DESC LIMIT 1", null)
         return if (cursor.moveToFirst()) {

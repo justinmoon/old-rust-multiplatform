@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.counter.ViewModel
 import uniffi.counter.Event
-import com.example.counter.DatabaseHelper
+import com.example.counter.Database
 import android.os.FileObserver
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.io.File

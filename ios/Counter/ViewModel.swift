@@ -12,7 +12,7 @@ import SwiftUI
         let rust = FfiApp(dataDir: documentsPath)
         let state = rust.getState()
 
-        self.count = db.getState()
+        self.count = db.getCounter()
         self.router = state.router
         self.rust = rust
 
@@ -23,7 +23,7 @@ import SwiftUI
     func update(update: Update) {
         switch update {
         case .databaseUpdate:
-            self.count = db.getState()
+            self.count = db.getCounter()
         case .routerUpdate(let router):
             self.router = router
         }
