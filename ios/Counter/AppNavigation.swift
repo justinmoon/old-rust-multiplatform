@@ -1,103 +1,151 @@
-//
-//  CounterApp.swift
-//  Counter
-//
-//  Created by Justin  on 6/4/24.
-//
-
-import Counter
 import SwiftUI
 
-@main
-struct CounterApp: App {
+struct AppNavigation: View {
     @State var rust: ViewModel
-
-    public init() {
-        self.rust = ViewModel()
-    }
-
-    var body: some Scene {
-        WindowGroup {
-            AppNavigation(rust: rust)
-        }
-    }
-}
-
-struct MainContentView: View {
-    @State var rust: ViewModel
-    @State private var tabSelection: Int = 0
-    @State private var showSuccess: Bool = false
-    @State private var showError: Bool = false
-    @State private var successMessage: String = ""
-    @State private var errorMessage: String = ""
+    @State private var navigationPath = NavigationPath()
+    @State private var showSuccessScreen = false
+    @State private var showErrorScreen = false
+    @State private var successMessage = "Transaction completed successfully!"
+    @State private var errorMessage = "Transaction failed. Please try again."
 
     var body: some View {
-        NavigationStack {
-            TabView(selection: $tabSelection) {
+        TabView(selection: tabSelection) {
+            NavigationStack(path: $navigationPath) {
                 HomeView(rust: rust)
-                    .tabItem {
-                        Label("Home", systemImage: "house")
+                    .navigationDestination(for: AppScreen.self) { screen in
+                        switch screen {
+                        case .mint:
+                            MintView(rust: rust)
+                        case .mintAmount:
+                            MintAmountView(rust: rust)
+                        case .mintConfirm:
+                            MintConfirmView(rust: rust)
+                        case .melt:
+                            MeltView(rust: rust)
+                        case .meltConfirm:
+                            MeltConfirmView(rust: rust)
+                        default:
+                            EmptyView()
+                        }
                     }
-                    .tag(0)
-
-                TransactionHistoryView(rust: rust)
-                    .tabItem {
-                        Label("History", systemImage: "clock")
-                    }
-                    .tag(1)
             }
-            .onChange(of: tabSelection) { oldValue, newValue in
+            .tabItem {
+                Label("Home", systemImage: "house")
+            }
+            .tag(0)
+
+            TransactionHistoryView(rust: rust)
+                .tabItem {
+                    Label("History", systemImage: "clock")
+                }
+                .tag(1)
+        }
+        .onChange(of: rust.router.route) { _, newRoute in
+            handleRouteChange(newRoute)
+        }
+        .fullScreenCover(isPresented: $showSuccessScreen) {
+            SuccessView(rust: rust, message: successMessage) {
+                // Reset to home on dismiss
+                rust.dispatch(event: .setRoute(route: .home))
+                showSuccessScreen = false
+            }
+        }
+        .fullScreenCover(isPresented: $showErrorScreen) {
+            ErrorView(
+                rust: rust,
+                error: errorMessage,
+                onRetry: {
+                    showErrorScreen = false
+                },
+                onQuit: {
+                    rust.dispatch(event: .setRoute(route: .home))
+                    showErrorScreen = false
+                }
+            )
+        }
+    }
+
+    // Helper binding for tab selection that syncs with router
+    private var tabSelection: Binding<Int> {
+        Binding<Int>(
+            get: {
+                switch rust.router.route {
+                case .transactionHistory: return 1
+                default: return 0
+                }
+            },
+            set: { newValue in
                 if newValue == 1 {
                     rust.dispatch(event: .setRoute(route: .transactionHistory))
                 } else {
                     rust.dispatch(event: .setRoute(route: .home))
                 }
             }
-            .fullScreenCover(isPresented: $showSuccess) {
-                SuccessView(
-                    rust: self.rust, message: successMessage,
-                    onDismiss: {
-                        showSuccess = false
-                    })
-            }
-            .fullScreenCover(isPresented: $showError) {
-                ErrorView(
-                    rust: self.rust, error: errorMessage,
-                    onRetry: {
-                        // Handle retry logic
-                        showError = false
-                    },
-                    onQuit: {
-                        showError = false
-                    })
-            }
-        }
-        .environmentObject(rust)
-        .onChange(of: rust.router.route) { oldValue, newValue in
-            handleRouteChange(newValue)
-        }
+        )
     }
 
     private func handleRouteChange(_ route: Route) {
         switch route {
         case .home:
-            tabSelection = 0
-        case .transactionHistory:
-            tabSelection = 1
+            // Clear navigation stack when returning to home
+            if navigationPath.count > 0 {
+                navigationPath.removeLast(navigationPath.count)
+            }
+        case .mint:
+            updateNavigationPath(to: .mint)
+        case .mintAmount:
+            updateNavigationPath(to: .mintAmount)
+        case .mintConfirm:
+            updateNavigationPath(to: .mintConfirm)
+        case .melt:
+            updateNavigationPath(to: .melt)
+        case .meltConfirm:
+            updateNavigationPath(to: .meltConfirm)
         case .success:
-            successMessage = "Transaction completed successfully!"
-            showSuccess = true
+            showSuccessScreen = true
         case .error:
-            errorMessage = "Transaction failed. Please try again."
-            showError = true
+            showErrorScreen = true
         default:
-            // Handle other routes if needed
             break
         }
     }
+
+    private func updateNavigationPath(to screen: AppScreen) {
+        // If there's no navigation yet, just push the screen
+        if navigationPath.isEmpty {
+            navigationPath.append(screen)
+            return
+        }
+
+        // Get current screens in path
+        var screens: [AppScreen] = []
+        for i in 0..<navigationPath.count {
+            if let screen = navigationPath.path[i] as? AppScreen {
+                screens.append(screen)
+            }
+        }
+
+        // If the last screen is the same as the one we want to navigate to, don't add it again
+        if let lastScreen = screens.last, lastScreen == screen {
+            return
+        }
+
+        navigationPath.append(screen)
+    }
 }
 
-// MARK: - View Declarations
+// Helper enum to use with NavigationStack
+enum AppScreen: Hashable {
+    case home
+    case mint
+    case mintAmount
+    case mintConfirm
+    case melt
+    case meltConfirm
+    case transactionHistory
+}
+
+// MARK: - View Implementations
 
 struct HomeView: View {
     @State var rust: ViewModel
@@ -129,7 +177,12 @@ struct HomeView: View {
                         .cornerRadius(10)
                 }
             }
+
+            // Add animation for jiggling buttons when transaction exists
+            // as shown in your mockup
+            .padding()
         }
+        .navigationTitle("Home")
     }
 }
 
@@ -183,11 +236,10 @@ struct MintAmountView: View {
     var body: some View {
         VStack {
             TextField("Amount", text: $amount)
-                .keyboardType(.numberPad)
                 .padding()
                 .background(Color.gray.opacity(0.2))
                 .cornerRadius(8)
-                .padding(.horizontal)
+                .padding()
 
             Button(action: {
                 rust.dispatch(event: .setRoute(route: .mintConfirm))

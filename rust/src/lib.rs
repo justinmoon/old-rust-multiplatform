@@ -60,6 +60,16 @@ pub trait FfiUpdater: Send + Sync + 'static {
 pub enum Route {
     Counter,
     Timer,
+    // New routes for the app
+    Home,
+    Mint,
+    MintAmount,
+    MintConfirm,
+    Melt,
+    MeltConfirm,
+    TransactionHistory,
+    Success,
+    Error,
 }
 
 #[derive(Clone, uniffi::Record)]
@@ -70,7 +80,7 @@ pub struct Router {
 impl Router {
     pub fn new() -> Self {
         Self {
-            route: Route::Counter,
+            route: Route::Home, // Default to Home screen now
         }
     }
 }
