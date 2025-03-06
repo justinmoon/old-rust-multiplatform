@@ -59,6 +59,8 @@ impl Database {
         let watcher = Watcher::new().unwrap();
 
         let conn = WatcherConnection::new(conn, Arc::clone(&watcher))?;
+
+        // Create app_state table
         conn.execute(
             "CREATE TABLE IF NOT EXISTS app_state (
                 id INTEGER PRIMARY KEY,
@@ -66,6 +68,16 @@ impl Database {
             )",
             [],
         )?;
+
+        // Create navigation_stack table
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS navigation_stack (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                route_name TEXT NOT NULL
+            )",
+            [],
+        )?;
+
         let mut stmt = conn.prepare("SELECT COUNT(*) FROM app_state")?;
         let count: i64 = stmt.query_row([], |row| row.get(0))?;
         if count == 0 {
@@ -74,7 +86,10 @@ impl Database {
         drop(stmt); // Explicitly drop `stmt` to release the borrow on `conn`
 
         // let (sender, receiver) = std::sync::mpsc::channel();
-        let observer = Observer::new("observer-1", vec!["app_state".to_owned()]);
+        let observer = Observer::new(
+            "observer-1",
+            vec!["app_state".to_owned(), "navigation_stack".to_owned()],
+        );
         let handle = watcher.add_observer(Box::new(observer)).unwrap();
 
         Ok(Self {
@@ -83,14 +98,6 @@ impl Database {
             handle,
         })
     }
-
-    // pub fn update_state(&self, state: &str) -> Result<()> {
-    //     self.conn
-    //         .lock()
-    //         .expect("Failed to lock the connection")
-    //         .execute("INSERT INTO app_state (state) VALUES (?1)", params![state])?;
-    //     Ok(())
-    // }
 
     pub fn increment_state(&self) {
         // panic!("increment_state");
@@ -120,7 +127,8 @@ impl Database {
     }
 
     pub fn decrement_state(&self) {
-        let mut conn = self.conn.lock().expect("Failed to lock the connection");
+        // FIXME: can we replace this with Detabase::execute?
+        let conn = self.conn.lock().expect("Failed to lock the connection");
         let mut counter = {
             let mut stmt = conn
                 .prepare("SELECT state FROM app_state ORDER BY id DESC LIMIT 1")
@@ -136,12 +144,36 @@ impl Database {
             }
         };
         counter -= 1;
-        conn.sync_watcher_tables().unwrap();
-        conn.execute(
+        self.execute(
             "INSERT INTO app_state (state) VALUES (?1)",
             params![counter.to_string()],
         )
         .unwrap();
-        conn.publish_watcher_changes().unwrap();
+    }
+
+    fn execute(&self, statement: &str, params: &[&dyn rusqlite::ToSql]) -> Result<()> {
+        let mut conn = self.conn.lock().expect("FIXME");
+        conn.sync_watcher_tables()?;
+        conn.execute(statement, params)?;
+        conn.publish_watcher_changes()?;
+        Ok(())
+    }
+
+    pub fn push_route(&self, route: &crate::Route) -> Result<()> {
+        self.execute(
+            "INSERT INTO navigation_stack (route_name) VALUES (?1)",
+            &[route],
+        )
+    }
+
+    pub fn pop_route(&self) -> Result<()> {
+        self.execute(
+            "DELETE FROM navigation_stack WHERE id = (SELECT MAX(id) FROM navigation_stack)",
+            &[],
+        )
+    }
+
+    pub fn reset_navigation_stack(&self) -> Result<()> {
+        self.execute("DELETE FROM navigation_stack", &[])
     }
 }

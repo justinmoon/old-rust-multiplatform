@@ -1,13 +1,11 @@
+import Counter
 import SwiftUI
 
 struct AppNavigation: View {
     @State var rust: ViewModel
-    @State private var navigationPath = NavigationPath()
-    @State private var showSuccessScreen = false
     @State private var showErrorScreen = false
     @State private var successMessage = "Transaction completed successfully!"
     @State private var errorMessage = "Transaction failed. Please try again."
-    @State private var screenStack: [AppScreen] = []
 
     // Public initializer
     init(rust: ViewModel) {
@@ -16,24 +14,104 @@ struct AppNavigation: View {
 
     var body: some View {
         TabView(selection: tabSelection) {
-            NavigationStack(path: $navigationPath) {
+            NavigationStack {
                 HomeView(rust: rust)
-                    .navigationDestination(for: AppScreen.self) { screen in
-                        switch screen {
-                        case .mint:
-                            MintView(rust: rust)
-                        case .mintAmount:
-                            MintAmountView(rust: rust)
-                        case .mintConfirm:
-                            MintConfirmView(rust: rust)
-                        case .melt:
-                            MeltView(rust: rust)
-                        case .meltConfirm:
-                            MeltConfirmView(rust: rust)
-                        default:
-                            EmptyView()
+                    .overlay(
+                        Group {
+                            // Conditionally show the appropriate view based on current route
+                            if rust.router.route != .home {
+                                switch rust.router.route {
+                                case .mint:
+                                    NavigationLink(
+                                        destination:
+                                            MintView(rust: rust)
+                                            .toolbar {
+                                                ToolbarItem(placement: .navigationBarLeading) {
+                                                    Button(action: {
+                                                        // Pop route in Rust
+                                                        rust.dispatch(event: .popRoute)
+                                                    }) {
+                                                        Image(systemName: "chevron.left")
+                                                            .imageScale(.large)
+                                                    }
+                                                }
+                                            },
+                                        isActive: .constant(true)
+                                    ) { EmptyView() }
+                                case .mintAmount:
+                                    NavigationLink(
+                                        destination:
+                                            MintAmountView(rust: rust)
+                                            .toolbar {
+                                                ToolbarItem(placement: .navigationBarLeading) {
+                                                    Button(action: {
+                                                        // Pop route in Rust
+                                                        rust.dispatch(event: .popRoute)
+                                                    }) {
+                                                        Image(systemName: "chevron.left")
+                                                            .imageScale(.large)
+                                                    }
+                                                }
+                                            },
+                                        isActive: .constant(true)
+                                    ) { EmptyView() }
+                                case .mintConfirm:
+                                    NavigationLink(
+                                        destination:
+                                            MintConfirmView(rust: rust)
+                                            .toolbar {
+                                                ToolbarItem(placement: .navigationBarLeading) {
+                                                    Button(action: {
+                                                        // Pop route in Rust
+                                                        rust.dispatch(event: .popRoute)
+                                                    }) {
+                                                        Image(systemName: "chevron.left")
+                                                            .imageScale(.large)
+                                                    }
+                                                }
+                                            },
+                                        isActive: .constant(true)
+                                    ) { EmptyView() }
+                                case .melt:
+                                    NavigationLink(
+                                        destination:
+                                            MeltView(rust: rust)
+                                            .toolbar {
+                                                ToolbarItem(placement: .navigationBarLeading) {
+                                                    Button(action: {
+                                                        // Pop route in Rust
+                                                        rust.dispatch(event: .popRoute)
+                                                    }) {
+                                                        Image(systemName: "chevron.left")
+                                                            .imageScale(.large)
+                                                    }
+                                                }
+                                            },
+                                        isActive: .constant(true)
+                                    ) { EmptyView() }
+                                case .meltConfirm:
+                                    NavigationLink(
+                                        destination:
+                                            MeltConfirmView(rust: rust)
+                                            .toolbar {
+                                                ToolbarItem(placement: .navigationBarLeading) {
+                                                    Button(action: {
+                                                        // Pop route in Rust
+                                                        rust.dispatch(event: .popRoute)
+                                                    }) {
+                                                        Image(systemName: "chevron.left")
+                                                            .imageScale(.large)
+                                                    }
+                                                }
+                                            },
+                                        isActive: .constant(true)
+                                    ) { EmptyView() }
+                                default:
+                                    EmptyView()
+                                }
+                            }
                         }
-                    }
+                    )
             }
             .tabItem {
                 Label("Home", systemImage: "house")
@@ -46,14 +124,11 @@ struct AppNavigation: View {
                 }
                 .tag(1)
         }
-        .onChange(of: rust.router.route) { _, newRoute in
-            handleRouteChange(newRoute)
-        }
-        .fullScreenCover(isPresented: $showSuccessScreen) {
-            SuccessView(rust: rust, message: successMessage) {
-                // Reset to home on dismiss
-                rust.dispatch(event: .setRoute(route: .home))
-                showSuccessScreen = false
+        .onChange(of: tabSelection) { oldValue, newValue in
+            if newValue == 1 {
+                rust.dispatch(event: .pushRoute(route: .transactionHistory))
+            } else {
+                rust.dispatch(event: .resetNavigationStack)
             }
         }
         .fullScreenCover(isPresented: $showErrorScreen) {
@@ -64,10 +139,17 @@ struct AppNavigation: View {
                     showErrorScreen = false
                 },
                 onQuit: {
-                    rust.dispatch(event: .setRoute(route: .home))
+                    rust.dispatch(event: .resetNavigationStack)
                     showErrorScreen = false
                 }
             )
+        }
+        .fullScreenCover(isPresented: $rust.isSuccessScreenShown) {
+            SuccessView(rust: rust, message: successMessage) {
+                // Reset to home on dismiss
+                rust.dispatch(event: .resetNavigationStack)
+                // rust.isSuccessScreenShown = false
+            }
         }
     }
 
@@ -82,61 +164,32 @@ struct AppNavigation: View {
             },
             set: { newValue in
                 if newValue == 1 {
-                    rust.dispatch(event: .setRoute(route: .transactionHistory))
+                    rust.dispatch(event: .pushRoute(route: .transactionHistory))
                 } else {
-                    rust.dispatch(event: .setRoute(route: .home))
+                    rust.dispatch(event: .resetNavigationStack)
                 }
             }
         )
     }
 
     private func handleRouteChange(_ route: Route) {
+        // Handle special routes first
         switch route {
         case .home:
-            // Clear navigation stack when returning to home
-            if navigationPath.count > 0 {
-                navigationPath.removeLast(navigationPath.count)
-            }
-        case .mint:
-            updateNavigationPath(to: .mint)
-        case .mintAmount:
-            updateNavigationPath(to: .mintAmount)
-        case .mintConfirm:
-            updateNavigationPath(to: .mintConfirm)
-        case .melt:
-            updateNavigationPath(to: .melt)
-        case .meltConfirm:
-            updateNavigationPath(to: .meltConfirm)
+            // Reset navigation stack in Rust
+            rust.dispatch(event: .resetNavigationStack)
         case .success:
-            showSuccessScreen = true
+            // Show success screen
+            print("fixme")
+        // rust.isSuccessScreenShown = true
         case .error:
+            // Show error screen
             showErrorScreen = true
         default:
-            break
+            // For routes that should push onto the navigation stack
+            rust.dispatch(event: .pushRoute(route: route))
         }
     }
-
-    private func updateNavigationPath(to screen: AppScreen) {
-        // Check if the last screen is the same as the one we want to navigate to
-        if let lastScreen = screenStack.last, lastScreen == screen {
-            return
-        }
-
-        // Update the screen stack and navigation path
-        screenStack.append(screen)
-        navigationPath.append(screen)
-    }
-}
-
-// Helper enum to use with NavigationStack
-enum AppScreen: Hashable {
-    case home
-    case mint
-    case mintAmount
-    case mintConfirm
-    case melt
-    case meltConfirm
-    case transactionHistory
 }
 
 // MARK: - View Implementations
@@ -152,7 +205,7 @@ struct HomeView: View {
 
             HStack(spacing: 20) {
                 Button(action: {
-                    rust.dispatch(event: .setRoute(route: .mint))
+                    rust.dispatch(event: .pushRoute(route: .mint))
                 }) {
                     Text("Mint")
                         .frame(width: 100, height: 50)
@@ -162,7 +215,7 @@ struct HomeView: View {
                 }
 
                 Button(action: {
-                    rust.dispatch(event: .setRoute(route: .melt))
+                    rust.dispatch(event: .pushRoute(route: .melt))
                 }) {
                     Text("Melt")
                         .frame(width: 100, height: 50)
@@ -205,7 +258,7 @@ struct MintView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
                 ForEach(["A", "B", "C", "D"], id: \.self) { option in
                     Button(action: {
-                        rust.dispatch(event: .setRoute(route: .mintAmount))
+                        rust.dispatch(event: .pushRoute(route: .mintAmount))
                     }) {
                         Text("Mint \(option)")
                             .frame(width: 120, height: 80)
@@ -236,7 +289,7 @@ struct MintAmountView: View {
                 .padding()
 
             Button(action: {
-                rust.dispatch(event: .setRoute(route: .mintConfirm))
+                rust.dispatch(event: .pushRoute(route: .mintConfirm))
             }) {
                 Text("Mint")
                     .frame(width: 100, height: 50)
@@ -264,7 +317,7 @@ struct MintConfirmView: View {
                 .padding()
 
             Button(action: {
-                rust.dispatch(event: .setRoute(route: .success))
+                rust.dispatch(event: .pushRoute(route: .success))
             }) {
                 Text("Confirm")
                     .frame(width: 120, height: 50)
@@ -298,7 +351,7 @@ struct MeltView: View {
                 )
 
             Button(action: {
-                rust.dispatch(event: .setRoute(route: .meltConfirm))
+                rust.dispatch(event: .pushRoute(route: .meltConfirm))
             }) {
                 Text("Scan")
                     .frame(width: 120, height: 50)
@@ -324,7 +377,7 @@ struct MeltConfirmView: View {
 
             HStack(spacing: 30) {
                 Button(action: {
-                    rust.dispatch(event: .setRoute(route: .success))
+                    rust.dispatch(event: .pushRoute(route: .success))
                 }) {
                     Text("Yes")
                         .frame(width: 80, height: 50)
@@ -334,7 +387,7 @@ struct MeltConfirmView: View {
                 }
 
                 Button(action: {
-                    rust.dispatch(event: .setRoute(route: .melt))
+                    rust.dispatch(event: .popRoute)
                 }) {
                     Text("No")
                         .frame(width: 80, height: 50)

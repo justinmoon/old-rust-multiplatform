@@ -38,4 +38,20 @@ class Database {
         sqlite3_finalize(queryStatement)
         return state
     }
+
+    func getCurrentRoute() -> String? {
+        let query = "SELECT route_name FROM navigation_stack ORDER BY id DESC LIMIT 1"
+        var queryStatement: OpaquePointer?
+        var routeName: String? = nil
+
+        if sqlite3_prepare_v2(db, query, -1, &queryStatement, nil) == SQLITE_OK {
+            if sqlite3_step(queryStatement) == SQLITE_ROW {
+                if let queryResultCol1 = sqlite3_column_text(queryStatement, 0) {
+                    routeName = String(cString: queryResultCol1)
+                }
+            }
+        }
+        sqlite3_finalize(queryStatement)
+        return routeName
+    }
 }

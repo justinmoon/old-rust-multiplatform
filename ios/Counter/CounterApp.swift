@@ -48,9 +48,9 @@ struct MainContentView: View {
             }
             .onChange(of: tabSelection) { oldValue, newValue in
                 if newValue == 1 {
-                    rust.dispatch(event: .setRoute(route: .transactionHistory))
+                    rust.dispatch(event: .pushRoute(route: .transactionHistory))
                 } else {
-                    rust.dispatch(event: .setRoute(route: .home))
+                    rust.dispatch(event: .resetNavigationStack)
                 }
             }
             .fullScreenCover(isPresented: $showSuccess) {

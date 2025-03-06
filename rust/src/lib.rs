@@ -9,6 +9,12 @@ use once_cell::sync::OnceCell;
 
 use db::Database;
 
+use rusqlite::{
+    types::ValueRef,
+    types::{FromSql, ToSql},
+    Error, Result,
+};
+
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 static UPDATER: OnceCell<Updater> = OnceCell::new();
 
@@ -17,13 +23,13 @@ static UPDATER: OnceCell<Updater> = OnceCell::new();
 pub enum Event {
     Increment,
     Decrement,
-    SetRoute { route: Route },
+    PushRoute { route: Route },
+    PopRoute,
+    ResetNavigationStack,
 }
 
 #[derive(uniffi::Enum)]
 pub enum Update {
-    // FIXME: https://github.com/mozilla/uniffi-rs/issues/1853
-    RouterUpdate { router: Router },
     // TODO: include all the update info
     DatabaseUpdate,
 }
@@ -70,6 +76,44 @@ pub enum Route {
     TransactionHistory,
     Success,
     Error,
+}
+
+impl ToSql for Route {
+    fn to_sql(&self) -> Result<rusqlite::types::ToSqlOutput> {
+        let value = match self {
+            Route::Counter => "counter",
+            Route::Timer => "timer",
+            Route::Home => "home",
+            Route::Mint => "mint",
+            Route::MintAmount => "mint_amount",
+            Route::MintConfirm => "mint_confirm",
+            Route::Melt => "melt",
+            Route::MeltConfirm => "melt_confirm",
+            Route::TransactionHistory => "transaction_history",
+            Route::Success => "success",
+            Route::Error => "error",
+        };
+        Ok(rusqlite::types::ToSqlOutput::from(value))
+    }
+}
+
+impl FromSql for Route {
+    fn column_result(value: ValueRef) -> rusqlite::types::FromSqlResult<Self> {
+        value.as_str().and_then(|s| match s {
+            "counter" => Ok(Route::Counter),
+            "timer" => Ok(Route::Timer),
+            "home" => Ok(Route::Home),
+            "mint" => Ok(Route::Mint),
+            "mint_amount" => Ok(Route::MintAmount),
+            "mint_confirm" => Ok(Route::MintConfirm),
+            "melt" => Ok(Route::Melt),
+            "melt_confirm" => Ok(Route::MeltConfirm),
+            "transaction_history" => Ok(Route::TransactionHistory),
+            "success" => Ok(Route::Success),
+            "error" => Ok(Route::Error),
+            _ => Err(rusqlite::types::FromSqlError::InvalidType),
+        })
+    }
 }
 
 #[derive(Clone, uniffi::Record)]
@@ -143,12 +187,16 @@ impl App {
             Event::Decrement => {
                 self.db.decrement_state();
             }
-            Event::SetRoute { route } => {
-                let mut state = state.write().unwrap();
-                state.router.route = route;
-                Updater::send_update(Update::RouterUpdate {
-                    router: state.router.clone(),
-                });
+            Event::PushRoute { route } => {
+                self.db.push_route(&route).expect("Failed to push route");
+            }
+            Event::PopRoute => {
+                self.db.pop_route().expect("Failed to pop route");
+            }
+            Event::ResetNavigationStack => {
+                self.db
+                    .reset_navigation_stack()
+                    .expect("Failed to reset navigation stack");
             }
         }
     }
