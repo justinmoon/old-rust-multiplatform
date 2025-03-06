@@ -2,6 +2,9 @@
 set -ex
 cd rust
 
+# FIXME: this is a hack to get xcode to find packages i installed via nix (like cargo)
+export PATH=$PATH:/etc/profiles/per-user/justin/bin
+
 BUILD_TYPE=$1
 
 echo "Building for $BUILD_TYPE"

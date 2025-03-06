@@ -5,7 +5,7 @@ cd ios
 SCHEME="Counter"
 APP_NAME="Counter"
 BUNDLE_ID="com.example.counter.Counter" # FIXME: why the extra .Counter?
-DESTINATION='platform=iOS Simulator,name=iPhone 15 Pro,OS=latest'
+DESTINATION='platform=iOS Simulator,name=iPhone 16 Pro,OS=latest'
 
 # Build the app
 xcodebuild -scheme "$SCHEME" -destination "$DESTINATION" build

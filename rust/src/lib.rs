@@ -226,6 +226,7 @@ impl App {
 /// Representation of our app over FFI. Essentially a wrapper of [`App`].
 #[derive(uniffi::Object)]
 pub struct FfiApp {
+    // FIXME: this is database path currently, not actually data dir
     data_dir: String,
 }
 
