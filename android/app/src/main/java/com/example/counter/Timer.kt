@@ -12,35 +12,9 @@ import uniffi.counter.Event
 
 @Composable
 fun Timer(viewModel: ViewModel) {
-    val timer by viewModel.timer.collectAsState()
-
-    Column(modifier = Modifier.padding(16.dp)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = "${timer.elapsedSecs}",
-                fontSize = 32.sp,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            if (timer.active) {
-                Button(onClick = { viewModel.dispatch(Event.TimerPause) }) {
-                    Text(text = "Stop")
-                }
-            } else {
-                Button(onClick = { viewModel.dispatch(Event.TimerStart) }) {
-                    Text(text = "Start")
-                }
-            }
-            Button(onClick = { viewModel.dispatch(Event.TimerReset) }) {
-                Text(text = "Reset")
-            }
-        }
-    }
+    Text(
+        text = "Timer",
+        fontSize = 32.sp,
+        modifier = Modifier.padding(horizontal = 16.dp)
+    )
 }

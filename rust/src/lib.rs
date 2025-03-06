@@ -2,10 +2,7 @@ uniffi::setup_scaffolding!();
 
 mod db;
 
-use std::{
-    sync::{Arc, RwLock},
-    time::Duration,
-};
+use std::sync::{Arc, RwLock};
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
@@ -15,20 +12,16 @@ use db::Database;
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 static UPDATER: OnceCell<Updater> = OnceCell::new();
 
-// TODO: namespace these: counter, timer, router, etc.
+// TODO: namespace these: counter, router, etc.
 #[derive(uniffi::Enum)]
 pub enum Event {
     Increment,
     Decrement,
-    TimerStart,
-    TimerPause,
-    TimerReset,
     SetRoute { route: Route },
 }
 
 #[derive(uniffi::Enum)]
 pub enum Update {
-    Timer { state: TimerState },
     // FIXME: https://github.com/mozilla/uniffi-rs/issues/1853
     RouterUpdate { router: Router },
     // TODO: include all the update info
@@ -63,21 +56,6 @@ pub trait FfiUpdater: Send + Sync + 'static {
     fn update(&self, update: Update);
 }
 
-#[derive(Clone, uniffi::Record)]
-pub struct TimerState {
-    elapsed_secs: u32,
-    active: bool,
-}
-
-impl TimerState {
-    pub fn new() -> Self {
-        Self {
-            elapsed_secs: 0,
-            active: false,
-        }
-    }
-}
-
 #[derive(Clone, uniffi::Enum)]
 pub enum Route {
     Counter,
@@ -99,16 +77,12 @@ impl Router {
 
 #[derive(Clone, uniffi::Record)]
 pub struct AppState {
-    count: i32,
-    timer: TimerState,
     router: Router,
 }
 
 impl AppState {
     pub fn new() -> Self {
         Self {
-            count: 0,
-            timer: TimerState::new(),
             router: Router::new(),
         }
     }
@@ -118,7 +92,6 @@ impl AppState {
 pub struct App {
     state: Arc<RwLock<AppState>>,
     update_receiver: Arc<Receiver<Update>>,
-    handle: Arc<std::thread::JoinHandle<()>>,
     db: Database,
 }
 
@@ -135,27 +108,11 @@ impl App {
 
         // FIXME: put this elsewhere ...
         // And perhapse this should just emit events which handle_event listens for?
-        let state_clone = state.clone();
-        let handle = std::thread::spawn(move || loop {
-            std::thread::sleep(Duration::from_secs(1));
-            let mut state = state_clone.write().unwrap();
-            if !state.timer.active {
-                continue;
-            }
-            state.timer.elapsed_secs += 1;
-            Updater::send_update(Update::Timer {
-                state: state.timer.clone(),
-            });
-        });
         let db = Database::new(ffi_app.data_dir.clone()).expect("FIXME");
-
-        // db.update_state("hello, world!").expect("FIXME");
-        // db.listen_for_updates();
 
         Self {
             update_receiver: Arc::new(receiver),
             state,
-            handle: Arc::new(handle),
             db,
         }
     }
@@ -175,27 +132,6 @@ impl App {
             }
             Event::Decrement => {
                 self.db.decrement_state();
-            }
-            Event::TimerStart => {
-                let mut state = state.write().unwrap();
-                state.timer.active = true;
-                Updater::send_update(Update::Timer {
-                    state: state.timer.clone(),
-                });
-            }
-            Event::TimerPause => {
-                let mut state = state.write().unwrap();
-                state.timer.active = false;
-                Updater::send_update(Update::Timer {
-                    state: state.timer.clone(),
-                });
-            }
-            Event::TimerReset => {
-                let mut state = state.write().unwrap();
-                state.timer = TimerState::new();
-                Updater::send_update(Update::Timer {
-                    state: state.timer.clone(),
-                });
             }
             Event::SetRoute { route } => {
                 let mut state = state.write().unwrap();
