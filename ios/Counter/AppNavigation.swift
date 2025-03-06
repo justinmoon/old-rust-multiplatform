@@ -24,86 +24,86 @@ struct AppNavigation: View {
                             case .mint:
                                 NavigationLink(
                                     destination:
-                                        MintView(rust: rust),
-                                    // .toolbar {
-                                    //     ToolbarItem(placement: .navigationBarLeading) {
-                                    //         Button {
-                                    //             // Pop route in Rust
-                                    //             rust.dispatch(event: .popRoute)
-                                    //         } label: {
-                                    //             Image(systemName: "chevron.left")
-                                    //                 .imageScale(.large)
-                                    //         }
-                                    //     }
-                                    // },
+                                        MintView(rust: rust)
+                                        .toolbar {
+                                            ToolbarItem(placement: .navigationBarLeading) {
+                                                Button {
+                                                    // Pop route in Rust
+                                                    rust.dispatch(event: .popRoute)
+                                                } label: {
+                                                    Image(systemName: "chevron.left")
+                                                        .imageScale(.large)
+                                                }
+                                            }
+                                        },
                                     isActive: .constant(true)
                                 ) { EmptyView() }
                             case .mintAmount:
                                 NavigationLink(
                                     destination:
-                                        MintAmountView(rust: rust),
-                                    // .toolbar {
-                                    //     ToolbarItem(placement: .navigationBarLeading) {
-                                    //         Button {
-                                    //             // Pop route in Rust
-                                    //             rust.dispatch(event: .popRoute)
-                                    //         } label: {
-                                    //             Image(systemName: "chevron.left")
-                                    //                 .imageScale(.large)
-                                    //         }
-                                    //     }
-                                    // },
+                                        MintAmountView(rust: rust)
+                                        .toolbar {
+                                            ToolbarItem(placement: .navigationBarLeading) {
+                                                Button {
+                                                    // Pop route in Rust
+                                                    rust.dispatch(event: .popRoute)
+                                                } label: {
+                                                    Image(systemName: "chevron.left")
+                                                        .imageScale(.large)
+                                                }
+                                            }
+                                        },
                                     isActive: .constant(true)
                                 ) { EmptyView() }
                             case .mintConfirm:
                                 NavigationLink(
                                     destination:
-                                        MintConfirmView(rust: rust),
-                                    // .toolbar {
-                                    //     ToolbarItem(placement: .navigationBarLeading) {
-                                    //         Button {
-                                    //             // Pop route in Rust
-                                    //             rust.dispatch(event: .popRoute)
-                                    //         } label: {
-                                    //             Image(systemName: "chevron.left")
-                                    //                 .imageScale(.large)
-                                    //         }
-                                    //     }
-                                    // },
+                                        MintConfirmView(rust: rust)
+                                        .toolbar {
+                                            ToolbarItem(placement: .navigationBarLeading) {
+                                                Button {
+                                                    // Pop route in Rust
+                                                    rust.dispatch(event: .popRoute)
+                                                } label: {
+                                                    Image(systemName: "chevron.left")
+                                                        .imageScale(.large)
+                                                }
+                                            }
+                                        },
                                     isActive: .constant(true)
                                 ) { EmptyView() }
                             case .melt:
                                 NavigationLink(
                                     destination:
-                                        MeltView(rust: rust),
-                                    // .toolbar {
-                                    //     ToolbarItem(placement: .navigationBarLeading) {
-                                    //         Button {
-                                    //             // Pop route in Rust
-                                    //             rust.dispatch(event: .popRoute)
-                                    //         } label: {
-                                    //             Image(systemName: "chevron.left")
-                                    //                 .imageScale(.large)
-                                    //         }
-                                    //     }
-                                    // },
+                                        MeltView(rust: rust)
+                                        .toolbar {
+                                            ToolbarItem(placement: .navigationBarLeading) {
+                                                Button {
+                                                    // Pop route in Rust
+                                                    rust.dispatch(event: .popRoute)
+                                                } label: {
+                                                    Image(systemName: "chevron.left")
+                                                        .imageScale(.large)
+                                                }
+                                            }
+                                        },
                                     isActive: .constant(true)
                                 ) { EmptyView() }
                             case .meltConfirm:
                                 NavigationLink(
                                     destination:
-                                        MeltConfirmView(rust: rust),
-                                    // .toolbar {
-                                    //     ToolbarItem(placement: .navigationBarLeading) {
-                                    //         Button {
-                                    //             // Pop route in Rust
-                                    //             rust.dispatch(event: .popRoute)
-                                    //         } label: {
-                                    //             Image(systemName: "chevron.left")
-                                    //                 .imageScale(.large)
-                                    //         }
-                                    //     }
-                                    // },
+                                        MeltConfirmView(rust: rust)
+                                        .toolbar {
+                                            ToolbarItem(placement: .navigationBarLeading) {
+                                                Button {
+                                                    // Pop route in Rust
+                                                    rust.dispatch(event: .popRoute)
+                                                } label: {
+                                                    Image(systemName: "chevron.left")
+                                                        .imageScale(.large)
+                                                }
+                                            }
+                                        },
                                     isActive: .constant(true)
                                 ) { EmptyView() }
                             default:
