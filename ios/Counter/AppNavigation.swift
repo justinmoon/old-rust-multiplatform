@@ -15,22 +15,7 @@ struct AppNavigation: View {
     }
 
     var body: some View {
-        // Create a read-only binding for navigation path derived from rust.router.route
-        NavigationStack(
-            path: Binding(
-                get: {
-                    // Convert router.route to navigation path
-                    if rust.router.route != .home {
-                        return [rust.router.route]
-                    } else {
-                        return []
-                    }
-                },
-                set: { _ in
-                    // Intentionally empty - we only update through rust.dispatch
-                }
-            )
-        ) {
+        NavigationStack(path: Binding.constant(rust.router.routes)) {
             // Main home view
             HomeView(rust: rust)
                 // Define navigation destinations for each route type
@@ -106,7 +91,7 @@ struct AppNavigation: View {
                     }
                 }
         }
-        .onChange(of: rust.router.route) { _, newRoute in
+        .onChange(of: rust.currentRoute) { _, newRoute in
             // Handle special routes
             if newRoute == .success {
                 // Show success screen
@@ -124,7 +109,7 @@ struct AppNavigation: View {
                     showErrorScreen = false
                 },
                 onQuit: {
-                    rust.dispatch(event: .resetNavigationStack)
+                    rust.dispatch(event: .resetRouter)
                     showErrorScreen = false
                 }
             )
@@ -132,7 +117,7 @@ struct AppNavigation: View {
         .fullScreenCover(isPresented: $showSuccessScreen) {
             SuccessView(rust: rust, message: successMessage) {
                 // Reset to home on dismiss
-                rust.dispatch(event: .resetNavigationStack)
+                rust.dispatch(event: .resetRouter)
                 showSuccessScreen = false
             }
         }

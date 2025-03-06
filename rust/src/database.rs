@@ -2,31 +2,24 @@ use rusqlite::{params, Connection, Result};
 use sqlite_watcher::connection::Connection as WatcherConnection;
 use sqlite_watcher::watcher::{TableObserver, TableObserverHandle, Watcher};
 
+use once_cell::sync::OnceCell;
 use std::collections::BTreeSet;
-use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{Arc, Mutex};
-use std::thread;
+use std::sync::{Arc, Mutex, RwLock};
 
-use crate::{Update, Updater};
+use crate::navigation::Router;
+use crate::{Route, Update, Updater};
+
+// Global static DATABASE instance
+pub static DATABASE: OnceCell<RwLock<Database>> = OnceCell::new();
 
 #[derive(Clone)]
 struct Observer {
-    name: String,
     tables: Vec<String>,
-    // sender: Sender<(String, BTreeSet<String>)>,
 }
 
 impl Observer {
-    pub fn new(
-        name: impl Into<String>,
-        tables: Vec<String>,
-        // sender: Sender<(String, BTreeSet<String>)>,
-    ) -> Observer {
-        Self {
-            name: name.into(),
-            tables,
-            // sender,
-        }
+    pub fn new(tables: Vec<String>) -> Observer {
+        Self { tables }
     }
 }
 
@@ -35,19 +28,14 @@ impl TableObserver for Observer {
         self.tables.clone()
     }
 
-    fn on_tables_changed(&self, tables: &BTreeSet<String>) {
-        // panic!("on_tables_changed");
+    fn on_tables_changed(&self, _tables: &BTreeSet<String>) {
         Updater::send_update(Update::DatabaseUpdate);
-        // self.sender
-        //     .send((self.name.clone(), tables.clone()))
-        //     .unwrap()
     }
 }
 
 #[derive(Clone)]
 pub struct Database {
     conn: Arc<Mutex<WatcherConnection<Connection>>>,
-    // observer: Observer, // FIXME: necessary?
     handle: TableObserverHandle,
 }
 
@@ -85,22 +73,16 @@ impl Database {
         }
         drop(stmt); // Explicitly drop `stmt` to release the borrow on `conn`
 
-        // let (sender, receiver) = std::sync::mpsc::channel();
-        let observer = Observer::new(
-            "observer-1",
-            vec!["app_state".to_owned(), "navigation_stack".to_owned()],
-        );
+        let observer = Observer::new(vec!["app_state".to_owned(), "navigation_stack".to_owned()]);
         let handle = watcher.add_observer(Box::new(observer)).unwrap();
 
         Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
-            // observer,
             handle,
         })
     }
 
     pub fn increment_state(&self) {
-        // panic!("increment_state");
         let mut conn = self.conn.lock().expect("Failed to lock the connection");
         let mut counter = {
             let mut stmt = conn
@@ -127,7 +109,6 @@ impl Database {
     }
 
     pub fn decrement_state(&self) {
-        // FIXME: can we replace this with Detabase::execute?
         let conn = self.conn.lock().expect("Failed to lock the connection");
         let mut counter = {
             let mut stmt = conn
@@ -159,7 +140,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn push_route(&self, route: &crate::Route) -> Result<()> {
+    pub fn push_route(&self, route: &Route) -> Result<()> {
         self.execute(
             "INSERT INTO navigation_stack (route_name) VALUES (?1)",
             &[route],
@@ -177,9 +158,96 @@ impl Database {
         self.execute("DELETE FROM navigation_stack", &[])
     }
 
+    /// Reset the router - alias for reset_navigation_stack
+    pub fn reset_router(&self) -> Result<()> {
+        self.reset_navigation_stack()
+    }
+
     /// Get a reference to the connection
     /// This is used by the NavigationStack to query routes
     pub fn get_connection(&self) -> std::sync::MutexGuard<WatcherConnection<Connection>> {
         self.conn.lock().expect("Failed to lock the connection")
+    }
+
+    /// Get the router
+    pub fn get_router(&self) -> Router {
+        Router::from_database()
+    }
+
+    /// Get just the routes from the router
+    pub fn get_routes(&self) -> Vec<Route> {
+        self.get_router().routes
+    }
+
+    /// Get the current route (or None if router is empty)
+    pub fn get_current_route(&self) -> Option<Route> {
+        self.get_router().current_route()
+    }
+}
+
+/// Representation of our database over FFI. Wrapper for Database.
+#[derive(uniffi::Object)]
+pub struct FfiDatabase {
+    // Path to database file
+    db_path: String,
+}
+
+#[uniffi::export]
+impl FfiDatabase {
+    /// FFI constructor which wraps in an Arc
+    #[uniffi::constructor]
+    pub fn new(db_path: String) -> Arc<Self> {
+        Arc::new(Self { db_path })
+    }
+
+    /// Get the router
+    pub fn get_router(&self) -> Router {
+        Router::from_database()
+    }
+
+    /// Get just the routes from the router
+    pub fn get_routes(&self) -> Vec<Route> {
+        self.get_router().routes
+    }
+
+    /// Get the current route (or None if router is empty)
+    pub fn get_current_route(&self) -> Option<Route> {
+        self.get_router().current_route()
+    }
+
+    /// Push a route onto the router
+    pub fn push_route(&self, route: Route) {
+        self.get_database()
+            .push_route(&route)
+            .expect("Failed to push route");
+    }
+
+    /// Pop the top route from the router
+    pub fn pop_route(&self) {
+        self.get_database()
+            .pop_route()
+            .expect("Failed to pop route");
+    }
+
+    /// Reset the router
+    pub fn reset_router(&self) {
+        self.get_database()
+            .reset_navigation_stack()
+            .expect("Failed to reset router");
+    }
+}
+
+impl FfiDatabase {
+    /// Get the Database instance (creates one if it doesn't exist)
+    fn get_database(&self) -> Database {
+        DATABASE
+            .get_or_init(|| {
+                let db =
+                    Database::new(self.db_path.clone()).expect("Failed to initialize database");
+                RwLock::new(db)
+            })
+            .read()
+            .expect("Failed to read database")
+            .clone()
     }
 }

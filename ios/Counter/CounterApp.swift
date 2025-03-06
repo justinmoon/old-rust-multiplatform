@@ -50,7 +50,7 @@ struct MainContentView: View {
                 if newValue == 1 {
                     rust.dispatch(event: .pushRoute(route: .transactionHistory))
                 } else {
-                    rust.dispatch(event: .resetNavigationStack)
+                    rust.dispatch(event: .resetRouter)
                 }
             }
             .fullScreenCover(isPresented: $showSuccess) {
@@ -73,8 +73,10 @@ struct MainContentView: View {
             }
         }
         //        .environmentObject(rust)
-        .onChange(of: rust.router.route) { oldValue, newValue in
-            handleRouteChange(newValue)
+        .onChange(of: rust.currentRoute) { oldValue, newValue in
+            if let unwrappedRoute = newValue {
+                handleRouteChange(unwrappedRoute)
+            }
         }
     }
 
