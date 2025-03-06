@@ -12,7 +12,7 @@ import uniffi.counter.Router
 import uniffi.counter.Update
 
 class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
-    val databaseHelper = DatabaseHelper(context);
+    val db = Database(context);
 
     private val rust: FfiApp
 
@@ -29,7 +29,7 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
 
         val rustState = rust.getState()
         _router = MutableStateFlow(rustState.router)
-        _counter = MutableStateFlow(databaseHelper.getState())
+        _counter = MutableStateFlow(db.getState())
     }
 
     override fun update(update: Update) {
@@ -39,7 +39,7 @@ class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
                 _router.value = update.router
             }
             is Update.DatabaseUpdate -> {
-                _counter.value = databaseHelper.getState();
+                _counter.value = db.getState();
             }
         }
     }

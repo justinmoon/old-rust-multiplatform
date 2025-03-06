@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		D000B2F02C0F7BAA00E32143 /* Counter.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = D000B2EF2C0F7BAA00E32143 /* Counter.xcframework */; };
 		D000B2F22C0F7BB100E32143 /* Counter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D000B2F12C0F7BB100E32143 /* Counter.swift */; };
+		D020BC492D79DC130069BFB9 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = D020BC482D79DC130069BFB9 /* Database.swift */; };
 		D0245F502C0F7B4E0042B447 /* CounterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0245F4F2C0F7B4E0042B447 /* CounterApp.swift */; };
 		D0245F522C0F7B4E0042B447 /* CounterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0245F512C0F7B4E0042B447 /* CounterView.swift */; };
 		D0245F542C0F7B500042B447 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D0245F532C0F7B500042B447 /* Assets.xcassets */; };
@@ -20,6 +21,7 @@
 /* Begin PBXFileReference section */
 		D000B2EF2C0F7BAA00E32143 /* Counter.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Counter.xcframework; path = ../rust/ios/Counter.xcframework; sourceTree = "<group>"; };
 		D000B2F12C0F7BB100E32143 /* Counter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Counter.swift; path = ../../rust/ios/Counter/Counter.swift; sourceTree = "<group>"; };
+		D020BC482D79DC130069BFB9 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		D0245F4C2C0F7B4E0042B447 /* Counter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Counter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D0245F4F2C0F7B4E0042B447 /* CounterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CounterApp.swift; sourceTree = "<group>"; };
 		D0245F512C0F7B4E0042B447 /* CounterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CounterView.swift; sourceTree = "<group>"; };
@@ -68,6 +70,7 @@
 				D0245F532C0F7B500042B447 /* Assets.xcassets */,
 				D0245F552C0F7B500042B447 /* Preview Content */,
 				D0BE2EBD2C1614150055FCBE /* ViewModel.swift */,
+				D020BC482D79DC130069BFB9 /* Database.swift */,
 			);
 			path = Counter;
 			sourceTree = "<group>";
@@ -172,6 +175,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D020BC492D79DC130069BFB9 /* Database.swift in Sources */,
 				D0BE2EBE2C1614150055FCBE /* ViewModel.swift in Sources */,
 				D0245F522C0F7B4E0042B447 /* CounterView.swift in Sources */,
 				D0245F502C0F7B4E0042B447 /* CounterApp.swift in Sources */,

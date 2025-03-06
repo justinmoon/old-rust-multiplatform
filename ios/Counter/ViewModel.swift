@@ -2,7 +2,8 @@ import SwiftUI
 
 @Observable class ViewModel: FfiUpdater {
     var rust: FfiApp
-    var count: Int32
+    let db = Database()
+    var count: String
     var router: Router
 
     public init() {
@@ -11,7 +12,7 @@ import SwiftUI
         let rust = FfiApp(dataDir: documentsPath)
         let state = rust.getState()
 
-        self.count = 0
+        self.count = db.getState()
         self.router = state.router
         self.rust = rust
 
@@ -22,8 +23,8 @@ import SwiftUI
     func update(update: Update) {
         switch update {
         case .databaseUpdate:
-            print("TODO: fetch state")
-        case .routerUpdate(router: let router):
+            self.count = db.getState()
+        case .routerUpdate(let router):
             self.router = router
         }
     }
