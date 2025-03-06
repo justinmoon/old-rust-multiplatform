@@ -5,7 +5,6 @@ import SwiftUI
     let db = Database()
     var count: String
     var router: Router
-    var isSuccessScreenShown: Bool = false
 
     public init() {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
