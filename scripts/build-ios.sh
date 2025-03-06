@@ -48,7 +48,7 @@ mv ./bindings/counter.swift ./ios/Counter/Counter.swift
 rm -rf "ios/Counter.xcframework" || true
         # -library ./target/aarch64-apple-ios/release/libcove.a -headers ./bindings \
 xcodebuild -create-xcframework \
-        -library ./target/aarch64-apple-ios-sim/release/libcounter.a -headers ./bindings \
+        -library ./target/aarch64-apple-ios-sim/debug/libcounter.a -headers ./bindings \
         -output "ios/Counter.xcframework"
  
 # Cleanup
