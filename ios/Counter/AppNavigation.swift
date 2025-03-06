@@ -15,10 +15,11 @@ struct AppNavigation: View {
     }
 
     var body: some View {
+        // Create a read-only binding for navigation path derived from rust.router.route
         NavigationStack(
             path: Binding(
                 get: {
-                    // Convert rust.router.route to NavigationPath
+                    // Convert router.route to navigation path
                     if rust.router.route != .home {
                         return [rust.router.route]
                     } else {
@@ -26,16 +27,18 @@ struct AppNavigation: View {
                     }
                 },
                 set: { _ in
-                    // Intentionally empty - we don't allow setting this way
-                    // All navigation must go through Rust
+                    // Intentionally empty - we only update through rust.dispatch
                 }
             )
         ) {
+            // Main home view
             HomeView(rust: rust)
+                // Define navigation destinations for each route type
                 .navigationDestination(for: Route.self) { route in
                     switch route {
                     case .mint:
                         MintView(rust: rust)
+                            .navigationBarBackButtonHidden(true)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarLeading) {
                                     Button {
@@ -48,6 +51,7 @@ struct AppNavigation: View {
                             }
                     case .mintAmount:
                         MintAmountView(rust: rust)
+                            .navigationBarBackButtonHidden(true)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarLeading) {
                                     Button {
@@ -60,6 +64,7 @@ struct AppNavigation: View {
                             }
                     case .mintConfirm:
                         MintConfirmView(rust: rust)
+                            .navigationBarBackButtonHidden(true)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarLeading) {
                                     Button {
@@ -72,6 +77,7 @@ struct AppNavigation: View {
                             }
                     case .melt:
                         MeltView(rust: rust)
+                            .navigationBarBackButtonHidden(true)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarLeading) {
                                     Button {
@@ -84,6 +90,7 @@ struct AppNavigation: View {
                             }
                     case .meltConfirm:
                         MeltConfirmView(rust: rust)
+                            .navigationBarBackButtonHidden(true)
                             .toolbar {
                                 ToolbarItem(placement: .navigationBarLeading) {
                                     Button {
@@ -129,12 +136,6 @@ struct AppNavigation: View {
                 showSuccessScreen = false
             }
         }
-    }
-
-    var routeDebug: String {
-        let routeValue = rust.router.route
-        print("Route: \(routeValue)")
-        return ""
     }
 }
 
