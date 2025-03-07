@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection, Result};
 use sqlite_watcher::connection::Connection as WatcherConnection;
-use sqlite_watcher::watcher::{TableObserver, TableObserverHandle, Watcher};
+use sqlite_watcher::watcher::{TableObserver, Watcher};
 
 use once_cell::sync::OnceCell;
 use std::collections::BTreeSet;
@@ -53,7 +53,6 @@ impl TableObserver for Observer {
 #[derive(Clone)]
 pub struct Database {
     conn: Arc<Mutex<WatcherConnection<Connection>>>,
-    handle: TableObserverHandle,
 }
 
 impl Database {
@@ -91,11 +90,10 @@ impl Database {
         drop(stmt); // Explicitly drop `stmt` to release the borrow on `conn`
 
         let observer = Observer::new(vec!["app_state".to_owned(), "navigation_stack".to_owned()]);
-        let handle = watcher.add_observer(Box::new(observer)).unwrap();
+        watcher.add_observer(Box::new(observer)).unwrap();
 
         Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
-            handle,
         })
     }
 
@@ -146,21 +144,6 @@ impl Database {
     /// This is used by the NavigationStack to query routes
     pub fn get_connection(&self) -> std::sync::MutexGuard<WatcherConnection<Connection>> {
         self.conn.lock().expect("Failed to lock the connection")
-    }
-
-    /// Get the router
-    pub fn get_router(&self) -> Router {
-        Router::get()
-    }
-
-    /// Get just the routes from the router
-    pub fn get_routes(&self) -> Vec<Route> {
-        Router::get().routes
-    }
-
-    /// Get the current route (or None if router is empty)
-    pub fn get_current_route(&self) -> Option<Route> {
-        Router::get().current_route()
     }
 }
 

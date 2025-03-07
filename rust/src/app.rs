@@ -21,7 +21,8 @@ pub enum Event {
 #[derive(Clone)]
 pub struct App {
     update_receiver: Arc<Receiver<Update>>,
-    pub data_dir: String,
+    #[allow(dead_code)]
+    data_dir: String,
 }
 
 impl App {
@@ -34,12 +35,9 @@ impl App {
         let (sender, receiver): (Sender<Update>, Receiver<Update>) = unbounded();
         Updater::init(sender);
 
-        // Store data_dir for future use
-        let data_dir = ffi_app.data_dir.clone();
-
         Self {
             update_receiver: Arc::new(receiver),
-            data_dir,
+            data_dir: ffi_app.data_dir.clone(),
         }
     }
 

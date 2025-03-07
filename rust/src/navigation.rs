@@ -8,18 +8,8 @@ use rusqlite::{
 // FIXME: WTF is this?
 extern crate self as counter;
 
-use core::panic;
-use once_cell::sync::OnceCell;
 
-use rusqlite::{
-    types::{FromSqlError, FromSqlResult, ToSqlOutput},
-    Error,
-};
-use std::fmt;
-use std::str::FromStr;
-use std::sync::RwLock;
 
-use crate::database::DATABASE;
 
 /// Route enum represents the different screens in the application
 #[derive(uniffi::Enum, Debug, Clone, PartialEq)]
