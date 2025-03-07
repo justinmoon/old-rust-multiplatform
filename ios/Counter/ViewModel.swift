@@ -5,7 +5,6 @@ import SwiftUI
     var rust: FfiApp
     var currentRoute: Route?
     var router: Router
-    var navigationPath: [Route] = []
 
     public init() {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
@@ -23,21 +22,11 @@ import SwiftUI
         switch update {
         case .routerUpdate(let routerUpdate):
             self.router = routerUpdate.router
-//            self.currentRoute = routerUpdate.router.currentRoute()
             self.currentRoute = routerUpdate.currentRoute
-
         }
-    }
-
-    // Helper function to get the current route
-    func getCurrentRoute() -> Route {
-        return currentRoute ?? .home
     }
 
     public func dispatch(event: Event) {
         self.rust.dispatch(event: event)
     }
-
-    // Additional state
-    var isSuccessScreenShown: Bool = false
 }
