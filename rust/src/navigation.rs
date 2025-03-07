@@ -8,9 +8,6 @@ use rusqlite::{
 // FIXME: WTF is this?
 extern crate self as counter;
 
-
-
-
 /// Route enum represents the different screens in the application
 #[derive(uniffi::Enum, Debug, Clone, PartialEq)]
 pub enum Route {
@@ -73,6 +70,12 @@ pub struct Router {
     pub routes: Vec<Route>,
 }
 
+impl Default for Router {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Router {
     /// Create a new empty Router
     pub fn new() -> Self {
@@ -92,16 +95,9 @@ impl Router {
         // Try to execute the query
         match db.get_connection().prepare(query) {
             Ok(mut stmt) => {
-                match stmt.query_map([], |row| row.get::<_, Route>(0)) {
-                    Ok(rows) => {
-                        // Collect all routes into a vector
-                        for route_result in rows {
-                            if let Ok(route) = route_result {
-                                routes.push(route);
-                            }
-                        }
-                    }
-                    Err(_) => return Self::new(), // Return empty router on query error
+                if let Ok(rows) = stmt.query_map([], |row| row.get::<_, Route>(0)) {
+                    // Use flatten() to skip Err results and collect only Ok values
+                    routes.extend(rows.flatten());
                 }
             }
             Err(_) => return Self::new(), // Return empty router on preparation error

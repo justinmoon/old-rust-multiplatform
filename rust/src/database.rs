@@ -40,7 +40,6 @@ impl TableObserver for Observer {
                 router,
                 current_route,
             });
-            return;
         }
 
         // Fallback to general update for other tables

@@ -29,3 +29,15 @@ run-ios: build-ios
 
 watch: 
     watchexec --exts rs just build-ios
+
+lint:
+    cd rust
+    cargo check
+    cargo clippy
+    cd ..
+
+fix:
+    cd rust
+    cargo fix --allow-dirty
+    cargo clippy --fix --allow-dirty
+    cd ..
