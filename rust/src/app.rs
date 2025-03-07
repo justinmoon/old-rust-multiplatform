@@ -48,23 +48,11 @@ impl App {
 
     /// Handle event received from frontend
     pub fn handle_event(&self, event: Event) {
-        // Handle event
+        let db = Database::global();
         match event {
-            Event::PushRoute { route } => {
-                // Use the global database
-                let db = Database::global();
-                db.push_route(&route).expect("Failed to push route");
-            }
-            Event::PopRoute => {
-                // Use the global database
-                let db = Database::global();
-                db.pop_route().expect("Failed to pop route");
-            }
-            Event::ResetRouter => {
-                // Use the global database
-                let db = Database::global();
-                db.reset_router().expect("Failed to reset router");
-            }
+            Event::PushRoute { route } => db.push_route(&route).unwrap(),
+            Event::PopRoute => db.pop_route().unwrap(),
+            Event::ResetRouter => db.reset_router().unwrap(),
         }
     }
 
