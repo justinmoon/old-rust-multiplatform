@@ -15,7 +15,7 @@ struct AppNavigation: View {
     }
 
     var body: some View {
-        NavigationStack(path: $rust.navigationPath) {
+        NavigationStack(path: $rust.router.routes) {
             // Main home view
             HomeView(rust: rust)
                 // Define navigation destinations for each route type

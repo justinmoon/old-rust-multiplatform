@@ -28,8 +28,25 @@ impl TableObserver for Observer {
         self.tables.clone()
     }
 
-    fn on_tables_changed(&self, _tables: &BTreeSet<String>) {
-        Updater::send_update(Update::DatabaseUpdate);
+    fn on_tables_changed(&self, tables: &BTreeSet<String>) {
+        // If navigation stack changed, send detailed update
+        if tables.contains("navigation_stack") {
+            // Use Router::get() to simplify getting router data
+            let router = Router::get();
+            let current_route = router.current_route();
+
+            // Send detailed update with router data
+            Updater::send_update(Update::RouterUpdate {
+                router,
+                current_route,
+            });
+            return;
+        }
+
+        // Fallback to general update for other tables
+        // This is commented out because Update::DatabaseUpdate has been commented out
+        // Uncomment if you re-enable DatabaseUpdate
+        // Updater::send_update(Update::DatabaseUpdate);
     }
 }
 
@@ -82,6 +99,18 @@ impl Database {
         })
     }
 
+    /// Get the global database instance
+    /// This assumes DATABASE has been initialized by FfiApp::new
+    /// and unwraps the RwLock for convenience
+    pub fn global() -> Database {
+        DATABASE
+            .get()
+            .expect("DATABASE not initialized. Call FfiApp::new first")
+            .read()
+            .expect("Failed to get read lock on DATABASE")
+            .clone()
+    }
+
     fn execute(&self, statement: &str, params: &[&dyn rusqlite::ToSql]) -> Result<()> {
         let mut conn = self.conn.lock().expect("FIXME");
         conn.sync_watcher_tables()?;
@@ -121,17 +150,17 @@ impl Database {
 
     /// Get the router
     pub fn get_router(&self) -> Router {
-        Router::from_database(self).unwrap()
+        Router::get()
     }
 
     /// Get just the routes from the router
     pub fn get_routes(&self) -> Vec<Route> {
-        self.get_router().routes
+        Router::get().routes
     }
 
     /// Get the current route (or None if router is empty)
     pub fn get_current_route(&self) -> Option<Route> {
-        self.get_router().current_route()
+        Router::get().current_route()
     }
 }
 
@@ -152,17 +181,17 @@ impl FfiDatabase {
 
     /// Get the router
     pub fn get_router(&self) -> Router {
-        Router::from_database(&self.get_database()).unwrap()
+        Router::get()
     }
 
     /// Get just the routes from the router
     pub fn get_routes(&self) -> Vec<Route> {
-        self.get_router().routes
+        Router::get().routes
     }
 
     /// Get the current route (or None if router is empty)
     pub fn get_current_route(&self) -> Option<Route> {
-        self.get_router().current_route()
+        Router::get().current_route()
     }
 
     /// Push a route onto the router

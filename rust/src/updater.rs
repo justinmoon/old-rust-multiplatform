@@ -1,3 +1,5 @@
+use crate::navigation::Router;
+use crate::Route;
 use crossbeam::channel::Sender;
 use once_cell::sync::OnceCell;
 
@@ -7,8 +9,13 @@ static UPDATER: OnceCell<Updater> = OnceCell::new();
 // FIXME: rename this notification
 #[derive(uniffi::Enum)]
 pub enum Update {
-    // TODO: include all the update info
-    DatabaseUpdate,
+    // General update for backward compatibility
+    // DatabaseUpdate,
+    // Specific update with router data
+    RouterUpdate {
+        router: Router,
+        current_route: Option<Route>,
+    },
 }
 
 // FIXME(justin): this is more of an "event bus"

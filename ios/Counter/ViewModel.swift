@@ -15,18 +15,17 @@ import SwiftUI
         self.rust = rust
         self.currentRoute = rust.getCurrentRoute()
         self.router = rust.getRouter()
-        self.navigationPath = self.router.routes
 
         self.rust.listenForUpdates(updater: self)
     }
 
     func update(update: Update) {
         switch update {
-        case .databaseUpdate:
-            self.currentRoute = rust.getCurrentRoute()
-            self.router = rust.getRouter()
-            self.navigationPath = self.router.routes
-            print("navigation path", self.navigationPath)
+        case .routerUpdate(let routerUpdate):
+            self.router = routerUpdate.router
+//            self.currentRoute = routerUpdate.router.currentRoute()
+            self.currentRoute = routerUpdate.currentRoute
+
         }
     }
 

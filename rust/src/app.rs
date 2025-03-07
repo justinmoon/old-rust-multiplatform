@@ -2,7 +2,7 @@ use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
 
-use crate::database::Database;
+use crate::database::{Database, DATABASE};
 use crate::navigation::Router;
 use crate::updater::{FfiUpdater, Update, Updater};
 use crate::Route;
@@ -21,7 +21,7 @@ pub enum Event {
 #[derive(Clone)]
 pub struct App {
     update_receiver: Arc<Receiver<Update>>,
-    db: Database,
+    pub data_dir: String,
 }
 
 impl App {
@@ -34,12 +34,12 @@ impl App {
         let (sender, receiver): (Sender<Update>, Receiver<Update>) = unbounded();
         Updater::init(sender);
 
-        // Create the database
-        let db = Database::new(ffi_app.data_dir.clone()).expect("Failed to initialize database");
+        // Store data_dir for future use
+        let data_dir = ffi_app.data_dir.clone();
 
         Self {
             update_receiver: Arc::new(receiver),
-            db,
+            data_dir,
         }
     }
 
@@ -53,13 +53,19 @@ impl App {
         // Handle event
         match event {
             Event::PushRoute { route } => {
-                self.db.push_route(&route).expect("Failed to push route");
+                // Use the global database
+                let db = Database::global();
+                db.push_route(&route).expect("Failed to push route");
             }
             Event::PopRoute => {
-                self.db.pop_route().expect("Failed to pop route");
+                // Use the global database
+                let db = Database::global();
+                db.pop_route().expect("Failed to pop route");
             }
             Event::ResetRouter => {
-                self.db.reset_router().expect("Failed to reset router");
+                // Use the global database
+                let db = Database::global();
+                db.reset_router().expect("Failed to reset router");
             }
         }
     }
@@ -72,18 +78,6 @@ impl App {
                 updater.update(field);
             }
         });
-    }
-
-    /// Get the router by querying the database directly
-    pub fn get_router(&self) -> Router {
-        // Use Router's from_database method
-        Router::from_database(&self.db).unwrap()
-    }
-
-    /// Get the current route by querying the database
-    pub fn get_current_route(&self) -> Option<Route> {
-        // Get router and return the last route (if any)
-        self.get_router().current_route()
     }
 }
 
@@ -99,6 +93,12 @@ impl FfiApp {
     /// FFI constructor which wraps in an Arc
     #[uniffi::constructor]
     pub fn new(data_dir: String) -> Arc<Self> {
+        // Ensure DATABASE initialized. We can now assume DATABASE exists everywhere in our code.
+        if DATABASE.get().is_none() {
+            let db = Database::new(data_dir.clone()).expect("Failed to initialize database");
+            let _ = DATABASE.set(RwLock::new(db));
+        }
+
         Arc::new(Self { data_dir })
     }
 
@@ -117,20 +117,14 @@ impl FfiApp {
 
     /// Get the router
     pub fn get_router(&self) -> Router {
-        // Query directly from the database each time
-        self.inner()
-            .read()
-            .expect("Failed to read app state")
-            .get_router()
+        // Use Router's static method directly
+        Router::get()
     }
 
     /// Get the current route (or None if router is empty)
     pub fn get_current_route(&self) -> Option<Route> {
-        // Query directly from the database each time
-        self.inner()
-            .read()
-            .expect("Failed to read app state")
-            .get_current_route()
+        // Use Router's static method directly
+        Router::get().current_route()
     }
 }
 

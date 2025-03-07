@@ -8,6 +8,19 @@ use rusqlite::{
 // FIXME: WTF is this?
 extern crate self as counter;
 
+use core::panic;
+use once_cell::sync::OnceCell;
+
+use rusqlite::{
+    types::{FromSqlError, FromSqlResult, ToSqlOutput},
+    Error,
+};
+use std::fmt;
+use std::str::FromStr;
+use std::sync::RwLock;
+
+use crate::database::DATABASE;
+
 /// Route enum represents the different screens in the application
 #[derive(uniffi::Enum, Debug, Clone, PartialEq)]
 pub enum Route {
@@ -76,34 +89,40 @@ impl Router {
         Self { routes: Vec::new() }
     }
 
-    pub fn from_database(db: &Database) -> Result<Self> {
-        let routes = get_routes_from_db(db)?;
-        Ok(Self { routes })
+    /// Get the router by querying the database directly
+    /// This static method uses the global DATABASE instance
+    pub fn get() -> Self {
+        // Get the global database instance
+        let db = Database::global();
+
+        // Execute the SQL query to get all routes
+        let query = "SELECT route_name FROM navigation_stack ORDER BY id";
+        let mut routes = Vec::new();
+
+        // Try to execute the query
+        match db.get_connection().prepare(query) {
+            Ok(mut stmt) => {
+                match stmt.query_map([], |row| row.get::<_, Route>(0)) {
+                    Ok(rows) => {
+                        // Collect all routes into a vector
+                        for route_result in rows {
+                            if let Ok(route) = route_result {
+                                routes.push(route);
+                            }
+                        }
+                    }
+                    Err(_) => return Self::new(), // Return empty router on query error
+                }
+            }
+            Err(_) => return Self::new(), // Return empty router on preparation error
+        }
+
+        // Return router with routes
+        Self { routes }
     }
 
     /// Get the current route (top of the stack)
     pub fn current_route(&self) -> Option<Route> {
         self.routes.last().cloned()
     }
-}
-
-// Helper function used by FfiDatabase to get routes data
-pub fn get_routes_from_db(db: &Database) -> Result<Vec<Route>> {
-    // Execute the SQL query to get all routes
-    let query = "SELECT route_name FROM navigation_stack ORDER BY id";
-    let mut routes = Vec::new();
-
-    // Use the database connection to execute the query
-    let conn = db.get_connection();
-    let mut stmt = conn.prepare(query)?;
-    let rows = stmt.query_map([], |row| row.get::<_, Route>(0))?;
-
-    // Collect all routes into a vector
-    for route_result in rows {
-        if let Ok(route) = route_result {
-            routes.push(route);
-        }
-    }
-
-    Ok(routes)
 }
