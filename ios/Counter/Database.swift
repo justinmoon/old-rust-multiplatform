@@ -23,22 +23,6 @@ class Database {
         sqlite3_close(db)
     }
 
-    func getCounter() -> String {
-        let query = "SELECT state FROM app_state ORDER BY id DESC LIMIT 1"
-        var queryStatement: OpaquePointer?
-        var state = ""
-
-        if sqlite3_prepare_v2(db, query, -1, &queryStatement, nil) == SQLITE_OK {
-            if sqlite3_step(queryStatement) == SQLITE_ROW {
-                if let queryResultCol1 = sqlite3_column_text(queryStatement, 0) {
-                    state = String(cString: queryResultCol1)
-                }
-            }
-        }
-        sqlite3_finalize(queryStatement)
-        return state
-    }
-
     func getCurrentRoute() -> String? {
         let query = "SELECT route_name FROM navigation_stack ORDER BY id DESC LIMIT 1"
         var queryStatement: OpaquePointer?

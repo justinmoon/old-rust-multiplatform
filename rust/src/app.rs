@@ -13,8 +13,6 @@ static APP: OnceCell<RwLock<App>> = OnceCell::new();
 // Event enum represents actions that can be dispatched to the app
 #[derive(uniffi::Enum)]
 pub enum Event {
-    Increment,
-    Decrement,
     PushRoute { route: Route },
     PopRoute,
     ResetRouter,
@@ -54,12 +52,6 @@ impl App {
     pub fn handle_event(&self, event: Event) {
         // Handle event
         match event {
-            Event::Increment => {
-                self.db.increment_state();
-            }
-            Event::Decrement => {
-                self.db.decrement_state();
-            }
             Event::PushRoute { route } => {
                 self.db.push_route(&route).expect("Failed to push route");
             }

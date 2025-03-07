@@ -82,56 +82,6 @@ impl Database {
         })
     }
 
-    pub fn increment_state(&self) {
-        let mut conn = self.conn.lock().expect("Failed to lock the connection");
-        let mut counter = {
-            let mut stmt = conn
-                .prepare("SELECT state FROM app_state ORDER BY id DESC LIMIT 1")
-                .expect("Failed to prepare statement");
-            let mut rows = stmt.query([]).expect("Failed to query");
-            if let Some(row) = rows.next().expect("Failed to get next row") {
-                row.get::<_, String>(0)
-                    .expect("Failed to get state")
-                    .parse::<i32>()
-                    .unwrap_or(1)
-            } else {
-                1
-            }
-        };
-        counter += 1;
-        conn.sync_watcher_tables().unwrap();
-        conn.execute(
-            "INSERT INTO app_state (state) VALUES (?1)",
-            params![counter.to_string()],
-        )
-        .unwrap();
-        conn.publish_watcher_changes().unwrap();
-    }
-
-    pub fn decrement_state(&self) {
-        let conn = self.conn.lock().expect("Failed to lock the connection");
-        let mut counter = {
-            let mut stmt = conn
-                .prepare("SELECT state FROM app_state ORDER BY id DESC LIMIT 1")
-                .expect("Failed to prepare statement");
-            let mut rows = stmt.query([]).expect("Failed to query");
-            if let Some(row) = rows.next().expect("Failed to get next row") {
-                row.get::<_, String>(0)
-                    .expect("Failed to get state")
-                    .parse::<i32>()
-                    .unwrap_or(1)
-            } else {
-                0
-            }
-        };
-        counter -= 1;
-        self.execute(
-            "INSERT INTO app_state (state) VALUES (?1)",
-            params![counter.to_string()],
-        )
-        .unwrap();
-    }
-
     fn execute(&self, statement: &str, params: &[&dyn rusqlite::ToSql]) -> Result<()> {
         let mut conn = self.conn.lock().expect("FIXME");
         conn.sync_watcher_tables()?;

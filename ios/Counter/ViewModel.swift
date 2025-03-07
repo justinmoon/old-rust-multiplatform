@@ -10,7 +10,6 @@ import SwiftUI
 @Observable class ViewModel: FfiUpdater {
     var rust: FfiApp
     let db = Database()
-    var count: String
     var currentRoute: Route?
     var router: Router
     var navigationPath: [Route] = []
@@ -20,7 +19,6 @@ import SwiftUI
             .first!.absoluteString
         let rust = FfiApp(dataDir: documentsPath)
 
-        self.count = db.getCounter()
         self.rust = rust
         self.currentRoute = rust.getCurrentRoute()
         self.router = rust.getRouter()
@@ -32,7 +30,6 @@ import SwiftUI
     func update(update: Update) {
         switch update {
         case .databaseUpdate:
-            self.count = db.getCounter()
             self.currentRoute = rust.getCurrentRoute()
             self.router = rust.getRouter()
             self.navigationPath = self.router.routes
