@@ -41,11 +41,6 @@ impl TableObserver for Observer {
                 current_route,
             });
         }
-
-        // Fallback to general update for other tables
-        // This is commented out because Update::DatabaseUpdate has been commented out
-        // Uncomment if you re-enable DatabaseUpdate
-        // Updater::send_update(Update::DatabaseUpdate);
     }
 }
 
