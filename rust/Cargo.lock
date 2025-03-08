@@ -817,6 +817,7 @@ dependencies = [
 [[package]]
 name = "sqlite-watcher"
 version = "0.4.2"
+source = "git+https://github.com/justinmoon/sqlite-watcher#cab00546b4f51ce8ec074c5987bc11e267aa9c4e"
 dependencies = [
  "fixedbitset",
  "flume",

@@ -17,7 +17,9 @@ uniffi = { version = "0.27.2", features = ["cli"] }
 android_logger = "0.10"
 log = "0.4"
 # sqlite-watcher = { version = "0.4.2", features = ["rusqlite"] }
-sqlite-watcher = { path = "../../sqlite-watcher", features = ["rusqlite"] }
+sqlite-watcher = { git = "https://github.com/justinmoon/sqlite-watcher", features = [
+    "rusqlite",
+] }
 libsqlite3-sys = { version = "0.30.1", features = ["bundled"] }
 rusqlite = { version = "0.32.1", features = ["bundled"] }
 
