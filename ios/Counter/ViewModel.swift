@@ -5,6 +5,8 @@ import SwiftUI
     var rust: FfiApp
     var currentRoute: Route?
     var router: Router
+    var postSuccessMessage: String?
+    var postEventId: String?
 
     public init() {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
@@ -14,6 +16,8 @@ import SwiftUI
         self.rust = rust
         self.currentRoute = rust.getCurrentRoute()
         self.router = rust.getRouter()
+        self.postSuccessMessage = nil
+        self.postEventId = nil
 
         self.rust.listenForUpdates(updater: self)
     }
@@ -23,6 +27,9 @@ import SwiftUI
         case .routerUpdate(let routerUpdate):
             self.router = routerUpdate.router
             self.currentRoute = routerUpdate.currentRoute
+        case let .postSendSuccess(message, eventId):
+            self.postSuccessMessage = message
+            self.postEventId = eventId
         }
     }
 

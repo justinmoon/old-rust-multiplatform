@@ -1,6 +1,8 @@
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
+use nostr_sdk::prelude::*;
+use tokio::runtime::Runtime;
 
 use crate::database::{Database, DATABASE};
 use crate::navigation::Router;
@@ -16,6 +18,7 @@ pub enum Event {
     PushRoute { route: Route },
     PopRoute,
     ResetRouter,
+    SendPost { text: String },
 }
 
 #[derive(Clone)]
@@ -23,6 +26,7 @@ pub struct App {
     update_receiver: Arc<Receiver<Update>>,
     #[allow(dead_code)]
     data_dir: String,
+    runtime: Arc<Runtime>,
 }
 
 impl App {
@@ -35,15 +39,42 @@ impl App {
         let (sender, receiver): (Sender<Update>, Receiver<Update>) = unbounded();
         Updater::init(sender);
 
+        // Create tokio runtime for async operations
+        let runtime = Arc::new(Runtime::new().expect("Failed to create Tokio runtime"));
+
         Self {
             update_receiver: Arc::new(receiver),
             data_dir: ffi_app.data_dir.clone(),
+            runtime,
         }
     }
 
     /// Fetch global instance of the app, or create one if it doesn't exist
     pub fn global(ffi_app: &FfiApp) -> &'static RwLock<App> {
         APP.get_or_init(|| RwLock::new(App::new(ffi_app)))
+    }
+
+    async fn send_nostr_post(text: String) -> Result<String, Box<dyn std::error::Error>> {
+        // Generate new random keys
+        let keys = Keys::generate();
+
+        // Create new client
+        let client = Client::new(keys);
+
+        // Add relays
+        client.add_relay("wss://relay.damus.io").await?;
+        
+        // Connect to relays
+        client.connect().await;
+
+        // Publish text note
+        let builder = EventBuilder::text_note(text);
+        let event_id = client.send_event_builder(builder).await?;
+        
+        // Disconnect from relays (no need for ? since we don't care about result)
+        let _ = client.disconnect().await;
+        
+        Ok(event_id.to_hex())
     }
 
     /// Handle event received from frontend
@@ -53,6 +84,30 @@ impl App {
             Event::PushRoute { route } => db.push_route(&route).unwrap(),
             Event::PopRoute => db.pop_route().unwrap(),
             Event::ResetRouter => db.reset_router().unwrap(),
+            Event::SendPost { text } => {
+                let runtime = self.runtime.clone();
+                
+                // Spawn a new thread for async operations
+                std::thread::spawn(move || {
+                    runtime.block_on(async {
+                        match Self::send_nostr_post(text.clone()).await {
+                            Ok(event_id) => {
+                                log::info!("Post sent successfully with event ID: {}", event_id);
+                                crate::updater::Updater::send_update(
+                                    crate::updater::Update::PostSendSuccess { 
+                                        message: "Post sent successfully!".to_string(),
+                                        event_id,
+                                    }
+                                );
+                            },
+                            Err(e) => {
+                                log::error!("Failed to send post: {}", e);
+                                // TODO: Add error handling update variant
+                            }
+                        }
+                    });
+                });
+            },
         }
     }
 

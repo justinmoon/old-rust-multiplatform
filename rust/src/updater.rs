@@ -16,6 +16,11 @@ pub enum Update {
         router: Router,
         current_route: Option<Route>,
     },
+    // Post sending result
+    PostSendSuccess { 
+        message: String,
+        event_id: String,
+    },
 }
 
 // FIXME(justin): this is more of an "event bus"

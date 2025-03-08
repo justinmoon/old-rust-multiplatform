@@ -131,45 +131,146 @@ struct AppNavigation: View {
 
 struct HomeView: View {
     @Bindable var rust: ViewModel
-
+    @State private var postText: String = "hey this is a post under 140 characters!"
+    @State private var characterCount: Int = 100
+    
     init(rust: ViewModel) {
         self.rust = rust
         print("HomeView initialized with ViewModel ID: \(ObjectIdentifier(rust))")
     }
-
+    
     var body: some View {
-        VStack {
-            Text("21,000 sats")
+        VStack(spacing: 0) {
+            // Title
+            Text("Poast")
                 .font(.largeTitle)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
                 .padding()
-
-            HStack(spacing: 20) {
-                Button(action: {
-                    rust.dispatch(event: .pushRoute(route: .mint))
-                }) {
-                    Text("Mint")
-                        .frame(width: 100, height: 50)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+            
+            if let eventId = rust.postEventId {
+                // Success state
+                VStack(spacing: 20) {
+                    Text("Post sent!")
+                        .font(.title)
+                        .foregroundColor(.green)
+                    
+                    Text("Event ID:")
+                        .font(.headline)
+                    
+                    Text(eventId)
+                        .font(.system(.body, design: .monospaced))
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color(.systemGray6))
+                        )
+                        .onTapGesture {
+                            UIPasteboard.general.string = eventId
+                        }
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.primary.opacity(0.2), lineWidth: 1)
+                        )
+                    
+                    Text("(Tap to copy)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Button(action: {
+                        // Reset state for new post
+                        rust.postEventId = nil
+                        rust.postSuccessMessage = nil
+                        postText = ""
+                    }) {
+                        Text("New Post")
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.black)
+                            .foregroundColor(.white)
+                            .cornerRadius(5)
+                    }
+                    .padding(.top, 30)
                 }
-
-                Button(action: {
-                    rust.dispatch(event: .pushRoute(route: .melt))
-                }) {
-                    Text("Melt")
-                        .frame(width: 100, height: 50)
-                        .background(Color.red)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                .padding()
+            } else {
+                // Post creation state
+                // Post input area
+                ZStack(alignment: .bottomTrailing) {
+                    TextEditor(text: $postText)
+                        .scrollContentBackground(.hidden)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 200)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.primary.opacity(0.3), lineWidth: 1)
+                                .background(Color(.systemBackground).opacity(0.3))
+                                .shadow(color: Color.primary.opacity(0.1), radius: 3, x: 0, y: 1)
+                        )
+                        .padding()
+                    
+                    // Character counter
+                    ZStack {
+                        Circle()
+                            .stroke(Color.primary.opacity(0.3), lineWidth: 1)
+                            .background(Circle().fill(Color(.systemBackground)))
+                            .frame(width: 40, height: 40)
+                        
+                        Text("\(characterCount)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.trailing, 30)
+                    .padding(.bottom, 30)
                 }
+                
+                // Media button
+                HStack {
+                    Button(action: {
+                        // Media button action
+                    }) {
+                        HStack {
+                            Image(systemName: "photo")
+                                .imageScale(.large)
+                            Text("Media")
+                                .fontWeight(.medium)
+                        }
+                        .padding()
+                        .frame(width: 150)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(Color.primary.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+                    .foregroundColor(.primary)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.top, 5)
+                
+                Spacer()
+                
+                // POAST button
+                Button(action: {
+                    rust.dispatch(event: .sendPost(text: postText))
+                }) {
+                    Text("POAST")
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.black)
+                        .foregroundColor(.white)
+                        .cornerRadius(5)
+                }
+                .padding()
             }
-
-            // Add animation for jiggling buttons when transaction exists
-            // as shown in your mockup
-            .padding()
         }
-        .navigationTitle("Home")
+        .navigationTitle("")
+        .navigationBarHidden(true)
     }
 }
 

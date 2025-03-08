@@ -22,6 +22,8 @@ sqlite-watcher = { git = "https://github.com/justinmoon/sqlite-watcher", feature
 ] }
 libsqlite3-sys = { version = "0.30.1", features = ["bundled"] }
 rusqlite = { version = "0.32.1", features = ["bundled"] }
+nostr-sdk = "0.39.0"
+tokio = { version = "1.36", features = ["full"] }
 
 
 # [build-dependencies]
