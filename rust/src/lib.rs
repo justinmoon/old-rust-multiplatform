@@ -1,18 +1,20 @@
 uniffi::setup_scaffolding!();
 
 // Module declarations
-mod app;
-mod database;
-mod navigation;
-mod updater;
+// mod app;
+// mod database;
+// mod navigation;
+// mod updater;
 mod wallet;
 
+mod cdk_integration_tests;
+
 // Re-exports for FFI
-pub use app::{Event, FfiApp};
-pub use database::FfiDatabase;
-pub use navigation::{Route, Router};
-pub use updater::{FfiUpdater, Update};
+// pub use app::{Event, FfiApp};
+// pub use database::FfiDatabase;
+// pub use navigation::{Route, Router};
+// pub use updater::{FfiUpdater, Update};
 
 // Internal re-exports
-pub(crate) use database::Database;
-pub(crate) use updater::Updater;
+// pub(crate) use database::Database;
+// pub(crate) use updater::Updater;
