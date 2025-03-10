@@ -41,3 +41,6 @@ fix:
     cargo fix --allow-dirty
     cargo clippy --fix --allow-dirty
     cd ..
+
+test:
+    bash scripts/run-tests.sh

@@ -5,6 +5,7 @@ mod app;
 mod database;
 mod navigation;
 mod updater;
+mod wallet;
 
 // Re-exports for FFI
 pub use app::{Event, FfiApp};
