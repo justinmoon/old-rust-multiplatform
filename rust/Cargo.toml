@@ -14,7 +14,6 @@ uniffi = { version = "0.27.2", features = ["cli"] }
 android_logger = "0.10"
 log = "0.4"
 cdk = "0.7.2"
-cdk-sqlite = "0.7.1"
 cdk-fake-wallet = "0.7.1"
 
 # FIXME: only using bundled b/c ndk couldn't link sqlite
