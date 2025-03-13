@@ -1,8 +1,7 @@
 //! Utility functions for the rust-multiplatform framework
 
-use crate::traits::{AppBuilder, BuildableApp, RmpAppModel, RmpViewModel};
+use crate::traits::{AppBuilder, RmpAppModel, RmpViewModel};
 use crossbeam::channel::{Receiver, Sender, unbounded};
-use std::sync::Arc;
 use std::thread;
 
 /// Set up a listener for model updates
@@ -15,6 +14,7 @@ pub fn listen_for_model_updates<M, V>(
 ) where
     M: RmpAppModel,
     V: RmpViewModel<UpdateType = M::UpdateType> + 'static,
+    M::UpdateType: Send + 'static,
 {
     // Get the receiver from the model
     if let Some(model_update_rx) = model.get_update_receiver() {

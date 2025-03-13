@@ -79,34 +79,11 @@ impl<T, U> AppBuilder<T, U> {
 
 /// Trait for models that use the AppBuilder
 /// 
-/// This trait is automatically implemented for any model that contains an AppBuilder,
-/// providing a default implementation of get_update_receiver.
-pub trait BuildableApp<U>: RmpAppModel<UpdateType = U> {
+/// This trait is implemented by models that contain an AppBuilder field,
+/// providing access to the update receiver.
+pub trait BuildableApp<U>: RmpAppModel<UpdateType = U> + Sized {
     /// Get the AppBuilder from the model
     fn builder(&self) -> &AppBuilder<Self, U>;
-}
-
-impl<T, U> RmpAppModel for T 
-where 
-    T: BuildableApp<U>,
-    U: 'static,
-{
-    type ActionType = <Self as RmpAppModel>::ActionType;
-    type UpdateType = U;
-    
-    fn create(data_dir: String) -> Self {
-        // This should be overridden by the model implementation
-        unimplemented!("The create method should be implemented by the model")
-    }
-    
-    fn action(&mut self, action: Self::ActionType) {
-        // This should be overridden by the model implementation
-        unimplemented!("The action method should be implemented by the model")
-    }
-    
-    fn get_update_receiver(&self) -> Option<Arc<Receiver<Self::UpdateType>>> {
-        Some(self.builder().model_update_rx.clone())
-    }
 }
 
 // Helper macro to implement BuildableApp for a model
