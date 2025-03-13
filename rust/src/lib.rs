@@ -1,6 +1,7 @@
 uniffi::setup_scaffolding!();
 
-use crossbeam::channel::{unbounded, Sender};
+use crossbeam::channel::{unbounded, Receiver, Sender};
+use std::sync::Arc;
 
 // Add the logging module
 mod logging;
@@ -18,11 +19,12 @@ pub enum Action {
     Decrement,
 }
 
-// Define a model with an app builder field for the update receiver
+// Define a model with a receiver for updates
 #[derive(Debug)]
 pub struct Model {
     pub count: i32,
     pub data_dir: String,
+    update_receiver: Option<Arc<Receiver<ModelUpdate>>>,
 }
 
 // Implement RmpAppModel for the model
@@ -31,7 +33,17 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
     type UpdateType = ModelUpdate;
 
     fn create(data_dir: String) -> Self {
-        Model { count: 0, data_dir }
+        // Create a channel for model updates
+        let (sender, receiver) = unbounded();
+
+        // Initialize the ViewModel with the sender
+        ViewModel::init(sender);
+
+        Model {
+            count: 0,
+            data_dir,
+            update_receiver: Some(Arc::new(receiver)),
+        }
     }
 
     fn action(&mut self, action: Self::ActionType) {
@@ -42,8 +54,10 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
         }
         ViewModel::model_update(ModelUpdate::CountChanged { count: self.count });
     }
-    // fn get_update_receiver(&self) -> Option<Arc<Receiver<Self::UpdateType>>> {
-    // }
+
+    fn get_update_receiver(&self) -> Option<Arc<Receiver<Self::UpdateType>>> {
+        self.update_receiver.clone()
+    }
 }
 
 // Define a view model
