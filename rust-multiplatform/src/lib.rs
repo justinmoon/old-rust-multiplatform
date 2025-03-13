@@ -13,10 +13,20 @@ mod generated_code_template;
 
 // Public exports
 pub use macros::register_app;
-pub use utils::listen_for_model_updates;
+pub use utils::{
+    listen_for_model_updates,
+    create_model_update_channel,
+    create_app_builder,
+};
+
+// Export the helper macro for implementing BuildableApp
+pub use crate::traits::impl_buildable_app;
 
 /// Traits that can be implemented by app models to integrate with the framework
 pub mod traits;
+
+// Re-export key traits for convenience
+pub use traits::{RmpAppModel, RmpViewModel, AppBuilder, BuildableApp};
 
 // Re-export frequently used types to make it easier for app developers
 pub use crossbeam;

@@ -50,3 +50,73 @@ pub trait RmpAppModel {
         None
     }
 }
+
+/// Helper for model implementations
+/// 
+/// This struct helps app developers implement the RmpAppModel trait with
+/// a default implementation for update receivers.
+pub struct AppBuilder<T, U> {
+    /// The model update receiver
+    pub model_update_rx: Arc<Receiver<U>>,
+    
+    /// The data directory
+    pub data_dir: String,
+    
+    /// Phantom data to tie the generic parameter to the model type
+    _phantom: std::marker::PhantomData<T>,
+}
+
+impl<T, U> AppBuilder<T, U> {
+    /// Create a new app builder with a receiver for model updates
+    pub fn new(data_dir: String, model_update_rx: Receiver<U>) -> Self {
+        Self {
+            model_update_rx: Arc::new(model_update_rx),
+            data_dir,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+/// Trait for models that use the AppBuilder
+/// 
+/// This trait is automatically implemented for any model that contains an AppBuilder,
+/// providing a default implementation of get_update_receiver.
+pub trait BuildableApp<U>: RmpAppModel<UpdateType = U> {
+    /// Get the AppBuilder from the model
+    fn builder(&self) -> &AppBuilder<Self, U>;
+}
+
+impl<T, U> RmpAppModel for T 
+where 
+    T: BuildableApp<U>,
+    U: 'static,
+{
+    type ActionType = <Self as RmpAppModel>::ActionType;
+    type UpdateType = U;
+    
+    fn create(data_dir: String) -> Self {
+        // This should be overridden by the model implementation
+        unimplemented!("The create method should be implemented by the model")
+    }
+    
+    fn action(&mut self, action: Self::ActionType) {
+        // This should be overridden by the model implementation
+        unimplemented!("The action method should be implemented by the model")
+    }
+    
+    fn get_update_receiver(&self) -> Option<Arc<Receiver<Self::UpdateType>>> {
+        Some(self.builder().model_update_rx.clone())
+    }
+}
+
+// Helper macro to implement BuildableApp for a model
+#[macro_export]
+macro_rules! impl_buildable_app {
+    ($Model:ty, $UpdateType:ty, $builder_field:ident) => {
+        impl $crate::traits::BuildableApp<$UpdateType> for $Model {
+            fn builder(&self) -> &$crate::traits::AppBuilder<Self, $UpdateType> {
+                &self.$builder_field
+            }
+        }
+    };
+}
