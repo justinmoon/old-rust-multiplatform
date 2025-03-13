@@ -2,10 +2,10 @@ use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
 
-use crate::updater::{FfiUpdater, Update, Updater};
+use crate::view_model::{FfiViewModel, ModelUpdate, ViewModel};
 
 // Global static APP instance
-static APP: OnceCell<RwLock<App>> = OnceCell::new();
+static GLOBAL_MODEL: OnceCell<RwLock<Action>> = OnceCell::new();
 
 // Event enum represents actions that can be dispatched to the app
 #[derive(uniffi::Enum)]
@@ -13,31 +13,31 @@ pub enum Event {}
 
 // TODO: derive RmpApp which adds global() method and generates FfiApp?
 #[derive(Clone)]
-pub struct App {
-    update_receiver: Arc<Receiver<Update>>,
+pub struct Action {
+    model_update_rx: Arc<Receiver<ModelUpdate>>,
     #[allow(dead_code)]
     data_dir: String,
 }
 
-impl App {
+impl Action {
     /// Create a new instance of the app
-    pub fn new(ffi_app: &FfiApp) -> Self {
+    pub fn new(singleton: &FfiModel) -> Self {
         android_logger::init_once(
             android_logger::Config::default().with_min_level(log::Level::Info),
         );
 
-        let (sender, receiver): (Sender<Update>, Receiver<Update>) = unbounded();
-        Updater::init(sender);
+        let (sender, receiver): (Sender<ModelUpdate>, Receiver<ModelUpdate>) = unbounded();
+        ViewModel::init(sender);
 
         Self {
-            update_receiver: Arc::new(receiver),
-            data_dir: ffi_app.data_dir.clone(),
+            model_update_rx: Arc::new(receiver),
+            data_dir: singleton.data_dir.clone(),
         }
     }
 
     /// Fetch global instance of the app, or create one if it doesn't exist
-    pub fn global(ffi_app: &FfiApp) -> &'static RwLock<App> {
-        APP.get_or_init(|| RwLock::new(App::new(ffi_app)))
+    pub fn get_or_set_global_model(ffi_model: &FfiModel) -> &'static RwLock<Action> {
+        GLOBAL_MODEL.get_or_init(|| RwLock::new(Action::new(ffi_model)))
     }
 
     /// Handle event received from frontend
@@ -46,11 +46,11 @@ impl App {
     }
 
     /// Set up listener for database updates
-    pub fn listen_for_updates(&self, updater: Box<dyn FfiUpdater>) {
-        let update_receiver = self.update_receiver.clone();
+    pub fn listen_for_updates(&self, updater: Box<dyn FfiViewModel>) {
+        let update_receiver = self.model_update_rx.clone();
         std::thread::spawn(move || {
             while let Ok(field) = update_receiver.recv() {
-                updater.update(field);
+                updater.dispatch(field);
             }
         });
     }
@@ -58,38 +58,38 @@ impl App {
 
 /// Representation of our app over FFI. Essentially a wrapper of [`App`].
 #[derive(uniffi::Object)]
-pub struct FfiApp {
+pub struct FfiModel {
     // FIXME: this is database path currently, not actually data dir
     #[allow(unused_variables)]
     pub data_dir: String,
 }
 
 #[uniffi::export]
-impl FfiApp {
-    /// FFI constructor which wraps in an Arc
+impl FfiModel {
     #[uniffi::constructor]
     pub fn new(data_dir: String) -> Arc<Self> {
-        // Ensure DATABASE initialized. We can now assume DATABASE exists everywhere in our code.
         Arc::new(Self { data_dir })
     }
 
     /// Frontend calls this method to send events to the rust application logic
     pub fn dispatch(&self, event: Event) {
-        // FIXME: this won't be able to handle concurrent events ...
-        self.inner().write().expect("fixme").handle_event(event);
+        self.get_or_set_global_model()
+            .write()
+            .expect("fixme")
+            .handle_event(event);
     }
 
-    pub fn listen_for_updates(&self, updater: Box<dyn FfiUpdater>) {
-        self.inner()
+    pub fn listen_for_updates(&self, updater: Box<dyn FfiViewModel>) {
+        self.get_or_set_global_model()
             .read()
             .expect("fixme")
             .listen_for_updates(updater);
     }
 }
 
-impl FfiApp {
+impl FfiModel {
     /// Fetch global instance of the app, or create one if it doesn't exist
-    fn inner(&self) -> &RwLock<App> {
-        App::global(self)
+    fn get_or_set_global_model(&self) -> &RwLock<Action> {
+        Action::get_or_set_global_model(self)
     }
 }

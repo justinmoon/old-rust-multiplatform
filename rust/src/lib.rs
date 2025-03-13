@@ -2,11 +2,11 @@ uniffi::setup_scaffolding!();
 
 // Module declarations
 mod app;
-mod updater;
+mod view_model;
 
 // Re-exports for FFI
-pub use app::{Event, FfiApp};
-pub use updater::{FfiUpdater, Update};
+pub use app::{Event, FfiModel};
+pub use view_model::{FfiViewModel, ModelUpdate};
 
 // Internal re-exports
-pub(crate) use updater::Updater;
+pub(crate) use view_model::ViewModel;
