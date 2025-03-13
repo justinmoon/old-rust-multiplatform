@@ -10,17 +10,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.counter.ViewModel
-import uniffi.counter.Event
-import com.example.counter.Database
-import android.os.FileObserver
-import kotlinx.coroutines.flow.MutableStateFlow
-import java.io.File
 import androidx.compose.runtime.collectAsState
+import uniffi.counter.Action
 
 @Composable
 fun Counter(viewModel: ViewModel) {
     val context = LocalContext.current
-    val counter = viewModel.counter.collectAsState().value
+    val counter = viewModel.count.collectAsState().value
 
     Box(
         modifier = Modifier
@@ -32,7 +28,7 @@ fun Counter(viewModel: ViewModel) {
                 horizontalArrangement = Arrangement.Center
             ) {
                 Button(
-                    onClick = { viewModel.dispatch(Event.Decrement) },
+                    onClick = { viewModel.action(Action.DECREMENT) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                     modifier = Modifier
                         .size(64.dp)
@@ -47,7 +43,7 @@ fun Counter(viewModel: ViewModel) {
                 )
 
                 Button(
-                    onClick = { viewModel.dispatch(Event.Increment) },
+                    onClick = { viewModel.action(Action.INCREMENT) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Green),
                     modifier = Modifier
                         .size(64.dp)

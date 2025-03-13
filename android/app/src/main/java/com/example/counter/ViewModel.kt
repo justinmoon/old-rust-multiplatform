@@ -4,46 +4,33 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import uniffi.counter.Event
-import uniffi.counter.FfiApp
-import uniffi.counter.FfiUpdater
-import uniffi.counter.Router
-import uniffi.counter.Update
+import uniffi.counter.Action
+import uniffi.counter.ModelUpdate
+import uniffi.counter.RmpModel
+import uniffi.counter.RmpViewModel
 
-class ViewModel(context: Context) : ViewModel(), FfiUpdater  {
-    val db = Database(context);
+class ViewModel(context: Context) : ViewModel(), RmpViewModel  {
+    private val model: RmpModel
 
-    private val rust: FfiApp
-
-    private var _counter: MutableStateFlow<String>
-    val counter: StateFlow<String> get() = _counter
-
-    private var _router: MutableStateFlow<Router>
-    val router: MutableStateFlow<Router> get() = _router
+    private var _count: MutableStateFlow<Int>
+    val count: StateFlow<Int> get() = _count
 
     init {
         val dataDir = context.filesDir.absolutePath
-        rust = FfiApp(dataDir)
-        rust.listenForUpdates(this)
-
-        val rustState = rust.getState()
-        _router = MutableStateFlow(rustState.router)
-        _counter = MutableStateFlow(db.getCounter())
+        model = RmpModel(dataDir)
+        model.listenForModelUpdates(this)
+        _count = MutableStateFlow(model.getCount())
     }
 
-    override fun update(update: Update) {
-        android.util.Log.d("DatabaseCheck", "update $update")
-        when (update) {
-            is Update.RouterUpdate -> {
-                _router.value = update.router
-            }
-            is Update.DatabaseUpdate -> {
-                _counter.value = db.getCounter();
+    override fun modelUpdate(modelUpdate: ModelUpdate) {
+        when (modelUpdate) {
+            is ModelUpdate.CountChanged -> {
+                _count.value = modelUpdate.count
             }
         }
     }
 
-    fun dispatch(event: Event) {
-        rust.dispatch(event)
+    fun action(action: Action) {
+        model.action(action)
     }
 }
