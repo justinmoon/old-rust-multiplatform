@@ -46,10 +46,7 @@ pub trait RmpAppModel {
     /// This is used by the framework to access the receiver for model updates.
     /// App developers should not need to implement this method manually as
     /// the app builder helper will implement it.
-    fn get_update_receiver(&self) -> Option<Arc<Receiver<Self::UpdateType>>> {
-        // FIXME: REMOVE THIS
-        None
-    }
+    fn get_update_receiver(&self) -> Arc<Receiver<Self::UpdateType>>;
 }
 
 /// Helper for model implementations

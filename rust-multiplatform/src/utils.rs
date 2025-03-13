@@ -16,22 +16,17 @@ where
 {
     log::info!("utils.rs listen_for_model_updates called");
     // Get the receiver from the model
-    if let Some(model_update_rx) = model.get_update_receiver() {
-        let model_update_rx = model_update_rx.clone();
+    let model_update_rx = model.get_update_receiver().clone();
 
-        log::info!("utils.rs spawning thread");
-        // Spawn a thread to listen for updates
-        thread::spawn(move || {
-            log::info!("Listening for model updates");
-            while let Ok(update) = model_update_rx.recv() {
-                log::info!("sending update {:?}", update);
-                view_model.model_update(update);
-            }
-        });
-    } else {
-        log::info!("NO UPDATE RECEIVER");
-        log::warn!("Model does not have an update receiver set up. Updates will not be forwarded to the view.");
-    }
+    log::info!("utils.rs spawning thread");
+    // Spawn a thread to listen for updates
+    thread::spawn(move || {
+        log::info!("Listening for model updates");
+        while let Ok(update) = model_update_rx.recv() {
+            log::info!("sending update {:?}", update);
+            view_model.model_update(update);
+        }
+    });
 }
 
 /// Create a new channel for model updates

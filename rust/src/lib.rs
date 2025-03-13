@@ -24,7 +24,7 @@ pub enum Action {
 pub struct Model {
     pub count: i32,
     pub data_dir: String,
-    update_receiver: Option<Arc<Receiver<ModelUpdate>>>,
+    update_receiver: Arc<Receiver<ModelUpdate>>,
 }
 
 // Implement RmpAppModel for the model
@@ -42,7 +42,7 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
         Model {
             count: 0,
             data_dir,
-            update_receiver: Some(Arc::new(receiver)),
+            update_receiver: Arc::new(receiver),
         }
     }
 
@@ -55,7 +55,7 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
         ViewModel::model_update(ModelUpdate::CountChanged { count: self.count });
     }
 
-    fn get_update_receiver(&self) -> Option<Arc<Receiver<Self::UpdateType>>> {
+    fn get_update_receiver(&self) -> Arc<Receiver<Self::UpdateType>> {
         self.update_receiver.clone()
     }
 }
