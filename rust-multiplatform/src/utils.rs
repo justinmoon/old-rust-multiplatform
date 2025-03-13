@@ -1,25 +1,23 @@
 //! Utility functions for the rust-multiplatform framework
 
 use crate::traits::{AppBuilder, RmpAppModel, RmpViewModel};
-use crossbeam::channel::{Receiver, Sender, unbounded};
+use crossbeam::channel::{unbounded, Receiver, Sender};
 use std::thread;
 
 /// Set up a listener for model updates
 ///
 /// This function creates a thread that listens for model updates and forwards them to the view model.
 /// It's used by the framework's generated code to handle the boilerplate of setting up the listener.
-pub fn listen_for_model_updates<M, V>(
-    model: &M,
-    view_model: Box<V>,
-) where
+pub fn listen_for_model_updates<M, V>(model: &M, view_model: Box<V>)
+where
     M: RmpAppModel,
-    V: RmpViewModel<UpdateType = M::UpdateType> + 'static,
+    V: RmpViewModel<UpdateType = M::UpdateType> + ?Sized + 'static,
     M::UpdateType: Send + 'static,
 {
     // Get the receiver from the model
     if let Some(model_update_rx) = model.get_update_receiver() {
         let model_update_rx = model_update_rx.clone();
-        
+
         // Spawn a thread to listen for updates
         thread::spawn(move || {
             while let Ok(update) = model_update_rx.recv() {
@@ -42,10 +40,7 @@ pub fn create_model_update_channel<T>() -> (Sender<T>, Receiver<T>) {
 /// Create a new app builder with a receiver for model updates
 ///
 /// This is a convenience function to create an AppBuilder with a new receiver.
-pub fn create_app_builder<M, U>(
-    data_dir: String,
-    receiver: Receiver<U>,
-) -> AppBuilder<M, U> 
+pub fn create_app_builder<M, U>(data_dir: String, receiver: Receiver<U>) -> AppBuilder<M, U>
 where
     M: RmpAppModel<UpdateType = U>,
 {
