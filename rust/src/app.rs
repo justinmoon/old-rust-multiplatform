@@ -9,7 +9,10 @@ static GLOBAL_MODEL: OnceCell<RwLock<Model>> = OnceCell::new();
 
 // Event enum represents actions that can be dispatched to the app
 #[derive(uniffi::Enum)]
-pub enum Action {}
+pub enum Action {
+    Increment,
+    Decrement,
+}
 
 // TODO: derive RmpApp which adds global() method and generates FfiApp?
 #[derive(Clone)]
@@ -17,6 +20,7 @@ pub struct Model {
     model_update_rx: Arc<Receiver<ModelUpdate>>,
     #[allow(dead_code)]
     data_dir: String,
+    count: i32,
 }
 
 impl Model {
@@ -32,6 +36,7 @@ impl Model {
         Self {
             model_update_rx: Arc::new(receiver),
             data_dir: singleton.data_dir.clone(),
+            count: 0,
         }
     }
 
@@ -41,16 +46,20 @@ impl Model {
     }
 
     /// Handle event received from frontend
-    pub fn handle_event(&self, event: Action) {
-        match event {}
+    pub fn action(&mut self, action: Action) {
+        match action {
+            Action::Increment => self.count += 1,
+            Action::Decrement => self.count -= 1,
+        }
+        ViewModel::model_update(ModelUpdate::CountChanged { count: self.count });
     }
 
     /// Set up listener for database updates
-    pub fn listen_for_updates(&self, updater: Box<dyn RmpViewModel>) {
-        let update_receiver = self.model_update_rx.clone();
+    pub fn listen_for_model_updates(&self, rmp_view_model: Box<dyn RmpViewModel>) {
+        let model_update_rx = self.model_update_rx.clone();
         std::thread::spawn(move || {
-            while let Ok(field) = update_receiver.recv() {
-                updater.dispatch(field);
+            while let Ok(field) = model_update_rx.recv() {
+                rmp_view_model.model_update(field);
             }
         });
     }
@@ -72,18 +81,25 @@ impl RmpModel {
     }
 
     /// Frontend calls this method to send events to the rust application logic
-    pub fn dispatch(&self, event: Action) {
+    pub fn action(&self, action: Action) {
         self.get_or_set_global_model()
             .write()
             .expect("fixme")
-            .handle_event(event);
+            .action(action);
     }
 
-    pub fn listen_for_updates(&self, updater: Box<dyn RmpViewModel>) {
+    // TODO: should it be
+    pub fn listen_for_model_updates(&self, updater: Box<dyn RmpViewModel>) {
         self.get_or_set_global_model()
             .read()
             .expect("fixme")
-            .listen_for_updates(updater);
+            .listen_for_model_updates(updater);
+    }
+
+    // FIXME: could have just a `get_initial_state` which just returns a big struct.
+    // then we wouldn't need to update this over time.
+    pub fn get_count(&self) -> i32 {
+        self.get_or_set_global_model().read().expect("fixme").count
     }
 }
 

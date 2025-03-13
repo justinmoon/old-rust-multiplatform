@@ -1,32 +1,29 @@
 import Counter
 import SwiftUI
 
-@Observable class ViewModel: FfiUpdater {
-    var rust: FfiApp
-    var currentRoute: Route?
-    var router: Router
+@Observable class ViewModel: RmpViewModel {
+    var model: RmpModel
+    var count: Int32
 
     public init() {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
             .first!.absoluteString
-        let rust = FfiApp(dataDir: documentsPath)
-
-        self.rust = rust
-        self.currentRoute = rust.getCurrentRoute()
-        self.router = rust.getRouter()
-
-        self.rust.listenForUpdates(updater: self)
+        let model = RmpModel(dataDir: documentsPath)
+        
+        self.model = model
+        self.count = model.getCount();
+        
+        self.model.listenForModelUpdates(updater: self)
     }
 
-    func update(update: Update) {
-        switch update {
-        case .routerUpdate(let routerUpdate):
-            self.router = routerUpdate.router
-            self.currentRoute = routerUpdate.currentRoute
+    func modelUpdate(modelUpdate: ModelUpdate) {
+        switch modelUpdate {
+        case .countChanged(let count):
+            self.count = count
         }
     }
 
-    public func dispatch(event: Event) {
-        self.rust.dispatch(event: event)
+    public func action(action: Action) {
+        self.model.action(action: action)
     }
 }

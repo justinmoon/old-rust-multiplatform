@@ -6,7 +6,9 @@ static GLOBAL_VIEW_MODEL: OnceCell<ViewModel> = OnceCell::new();
 
 // FIXME: rename this notification
 #[derive(uniffi::Enum)]
-pub enum ModelUpdate {}
+pub enum ModelUpdate {
+    CountChanged { count: i32 },
+}
 
 // FIXME(justin): this is more of an "event bus"
 #[derive(Clone)]
@@ -18,12 +20,12 @@ impl ViewModel {
         GLOBAL_VIEW_MODEL.get_or_init(|| ViewModel(sender));
     }
 
-    pub fn dispatch(update: ModelUpdate) {
+    pub fn model_update(model_update: ModelUpdate) {
         GLOBAL_VIEW_MODEL
             .get()
             .expect("updater is not initialized")
             .0
-            .send(update)
+            .send(model_update)
             .expect("failed to send update");
     }
 }
@@ -33,5 +35,5 @@ impl ViewModel {
 #[uniffi::export(callback_interface)]
 pub trait RmpViewModel: Send + Sync + 'static {
     /// Essentially a callback to the frontend
-    fn dispatch(&self, update: ModelUpdate);
+    fn model_update(&self, model_update: ModelUpdate);
 }
