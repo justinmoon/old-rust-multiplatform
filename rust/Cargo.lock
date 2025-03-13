@@ -282,6 +282,7 @@ dependencies = [
  "log",
  "once_cell",
  "rusqlite",
+ "rust-multiplatform",
  "sqlite-watcher",
  "uniffi",
 ]
@@ -698,6 +699,16 @@ dependencies = [
  "hashlink",
  "libsqlite3-sys",
  "smallvec",
+]
+
+[[package]]
+name = "rust-multiplatform"
+version = "0.1.0"
+dependencies = [
+ "crossbeam",
+ "log",
+ "once_cell",
+ "uniffi",
 ]
 
 [[package]]
