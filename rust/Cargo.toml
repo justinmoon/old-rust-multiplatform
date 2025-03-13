@@ -14,7 +14,6 @@ uniffi = { version = "0.27.2", features = ["cli"] }
 rust-multiplatform = { path = "../rust-multiplatform" }
 android_logger = "0.10"
 log = "0.4"
-oslog = "0.2"
 
 [target.'cfg(target_os = "android")'.dependencies]
 android_logger = "0.10"
