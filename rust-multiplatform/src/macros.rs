@@ -77,12 +77,14 @@ macro_rules! register_app {
             }
 
             pub fn listen_for_model_updates(&self, updater: Box<dyn RmpViewModel>) {
+                log::info!("macros.rs listen_for_model_updates");
                 // Set up the listener
                 let model = self
                     .get_or_set_global_model()
                     .read()
                     .expect("Failed to acquire read lock on model");
 
+                log::info!("macros.rs got model");
                 // Just pass the updater as is
                 $crate::listen_for_model_updates(&*model, updater);
             }

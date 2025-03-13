@@ -2,16 +2,20 @@ uniffi::setup_scaffolding!();
 
 use crossbeam::channel::{unbounded, Sender};
 
+// Add the logging module
+mod logging;
+
 // Define a model update type
 #[derive(Debug, PartialEq, Clone, uniffi::Enum)]
 pub enum ModelUpdate {
-    Update { value: i32 },
+    CountChanged { count: i32 },
 }
 
 // Define an action type
 #[derive(Debug, PartialEq, uniffi::Enum)]
 pub enum Action {
-    Action,
+    Increment,
+    Decrement,
 }
 
 // Define a model with an app builder field for the update receiver
@@ -31,10 +35,15 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
     }
 
     fn action(&mut self, action: Self::ActionType) {
+        log::info!("action {:?}", action);
         match action {
-            Action::Action => self.count += 1,
+            Action::Increment => self.count += 1,
+            Action::Decrement => self.count -= 1,
         }
+        ViewModel::model_update(ModelUpdate::CountChanged { count: self.count });
     }
+    // fn get_update_receiver(&self) -> Option<Arc<Receiver<Self::UpdateType>>> {
+    // }
 }
 
 // Define a view model
@@ -43,6 +52,21 @@ struct ViewModel(pub Sender<ModelUpdate>);
 
 // Use the register_app macro to generate the FFI code
 rust_multiplatform::register_app!(Model, ViewModel, Action, ModelUpdate);
+
+#[uniffi::export]
+impl RmpModel {
+    pub fn get_count(&self) -> i32 {
+        self.get_or_set_global_model()
+            .read()
+            .expect("Failed to acquire read lock on model")
+            .count
+    }
+
+    /// Initialize platform-specific logging
+    pub fn setup_logging(&self) {
+        logging::init_logging();
+    }
+}
 
 #[test]
 fn test_model_creation() {

@@ -12,11 +12,14 @@ import SwiftUI
         
         self.model = model
         self.count = model.getCount();
-        
+    
+        self.model.setupLogging()
         self.model.listenForModelUpdates(updater: self)
     }
 
     func modelUpdate(modelUpdate: ModelUpdate) {
+        print("model update")
+        print(modelUpdate)
         switch modelUpdate {
         case .countChanged(let count):
             self.count = count

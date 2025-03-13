@@ -12,7 +12,7 @@ use std::sync::Arc;
 pub trait RmpViewModel: Send + Sync + 'static {
     /// The type of updates that can be received from the model
     type UpdateType;
-    
+
     /// Handle a model update
     ///
     /// This function is called when the model has an update to send to the view.
@@ -25,43 +25,44 @@ pub trait RmpViewModel: Send + Sync + 'static {
 /// with automatic integration into the FFI layer.
 pub trait RmpAppModel {
     /// The type of actions that can be dispatched to the model
-    type ActionType;
-    
+    type ActionType: std::fmt::Debug;
+
     /// The type of updates that can be sent from the model to the view
-    type UpdateType;
-    
+    type UpdateType: std::fmt::Debug;
+
     /// Create a new instance of the model
     ///
     /// This function is called by the framework to initialize the model.
     /// The `data_dir` parameter provides a location for storing app data.
     fn create(data_dir: String) -> Self;
-    
+
     /// Handle an action dispatched to the model
     ///
     /// This function is called when an action is dispatched from the frontend.
     fn action(&mut self, action: Self::ActionType);
-    
+
     /// Get access to the model update receiver
     ///
     /// This is used by the framework to access the receiver for model updates.
     /// App developers should not need to implement this method manually as
     /// the app builder helper will implement it.
     fn get_update_receiver(&self) -> Option<Arc<Receiver<Self::UpdateType>>> {
+        // FIXME: REMOVE THIS
         None
     }
 }
 
 /// Helper for model implementations
-/// 
+///
 /// This struct helps app developers implement the RmpAppModel trait with
 /// a default implementation for update receivers.
 pub struct AppBuilder<T, U> {
     /// The model update receiver
     pub model_update_rx: Arc<Receiver<U>>,
-    
+
     /// The data directory
     pub data_dir: String,
-    
+
     /// Phantom data to tie the generic parameter to the model type
     _phantom: std::marker::PhantomData<T>,
 }
@@ -78,7 +79,7 @@ impl<T, U> AppBuilder<T, U> {
 }
 
 /// Trait for models that use the AppBuilder
-/// 
+///
 /// This trait is implemented by models that contain an AppBuilder field,
 /// providing access to the update receiver.
 pub trait BuildableApp<U>: RmpAppModel<UpdateType = U> + Sized {

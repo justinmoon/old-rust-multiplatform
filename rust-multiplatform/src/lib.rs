@@ -8,17 +8,12 @@ pub use uniffi;
 
 // Internal modules
 mod macros;
-mod utils;
-mod generated_code_template;
 #[cfg(test)]
 mod tests;
+mod utils;
 
 // Public exports
-pub use utils::{
-    listen_for_model_updates,
-    create_model_update_channel,
-    create_app_builder,
-};
+pub use utils::{create_app_builder, create_model_update_channel, listen_for_model_updates};
 
 // Note: Macros exported with #[macro_export] are automatically available at the crate root
 // and don't need to be re-exported
@@ -27,7 +22,7 @@ pub use utils::{
 pub mod traits;
 
 // Re-export key traits for convenience
-pub use traits::{RmpAppModel, RmpViewModel, AppBuilder, BuildableApp};
+pub use traits::{AppBuilder, BuildableApp, RmpAppModel, RmpViewModel};
 
 // Re-export frequently used types to make it easier for app developers
 pub use crossbeam;
