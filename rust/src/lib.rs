@@ -5,7 +5,7 @@ mod app;
 mod view_model;
 
 // Re-exports for FFI
-pub use app::{Event, RmpModel};
+pub use app::{Action, RmpModel};
 pub use view_model::{ModelUpdate, RmpViewModel};
 
 // Internal re-exports

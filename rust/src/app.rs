@@ -5,21 +5,21 @@ use std::sync::{Arc, RwLock};
 use crate::view_model::{ModelUpdate, RmpViewModel, ViewModel};
 
 // Global static APP instance
-static GLOBAL_MODEL: OnceCell<RwLock<Action>> = OnceCell::new();
+static GLOBAL_MODEL: OnceCell<RwLock<Model>> = OnceCell::new();
 
 // Event enum represents actions that can be dispatched to the app
 #[derive(uniffi::Enum)]
-pub enum Event {}
+pub enum Action {}
 
 // TODO: derive RmpApp which adds global() method and generates FfiApp?
 #[derive(Clone)]
-pub struct Action {
+pub struct Model {
     model_update_rx: Arc<Receiver<ModelUpdate>>,
     #[allow(dead_code)]
     data_dir: String,
 }
 
-impl Action {
+impl Model {
     /// Create a new instance of the app
     pub fn new(singleton: &RmpModel) -> Self {
         android_logger::init_once(
@@ -36,12 +36,12 @@ impl Action {
     }
 
     /// Fetch global instance of the app, or create one if it doesn't exist
-    pub fn get_or_set_global_model(ffi_model: &RmpModel) -> &'static RwLock<Action> {
-        GLOBAL_MODEL.get_or_init(|| RwLock::new(Action::new(ffi_model)))
+    pub fn get_or_set_global_model(ffi_model: &RmpModel) -> &'static RwLock<Model> {
+        GLOBAL_MODEL.get_or_init(|| RwLock::new(Model::new(ffi_model)))
     }
 
     /// Handle event received from frontend
-    pub fn handle_event(&self, event: Event) {
+    pub fn handle_event(&self, event: Action) {
         match event {}
     }
 
@@ -72,7 +72,7 @@ impl RmpModel {
     }
 
     /// Frontend calls this method to send events to the rust application logic
-    pub fn dispatch(&self, event: Event) {
+    pub fn dispatch(&self, event: Action) {
         self.get_or_set_global_model()
             .write()
             .expect("fixme")
@@ -89,7 +89,7 @@ impl RmpModel {
 
 impl RmpModel {
     /// Fetch global instance of the app, or create one if it doesn't exist
-    fn get_or_set_global_model(&self) -> &RwLock<Action> {
-        Action::get_or_set_global_model(self)
+    fn get_or_set_global_model(&self) -> &RwLock<Model> {
+        Model::get_or_set_global_model(self)
     }
 }
