@@ -1,13 +1,15 @@
+uniffi::setup_scaffolding!();
+
 use crossbeam::channel::{unbounded, Sender};
 
 // Define a model update type
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, uniffi::Enum)]
 pub enum ModelUpdate {
     Update { value: i32 },
 }
 
 // Define an action type
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, uniffi::Enum)]
 pub enum Action {
     Action,
 }

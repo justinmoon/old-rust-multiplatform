@@ -45,7 +45,7 @@ macro_rules! register_app {
 
         // 3. Define a wrapper struct for FFI
         #[cfg(not(test))]
-        #[::uniffi::object]
+        #[derive(uniffi::Object)]
         pub struct RmpModel {
             pub data_dir: String,
         }
@@ -150,7 +150,7 @@ macro_rules! register_app {
         }
 
         // 8. Set up the uniffi scaffolding
-        #[cfg(not(test))]
-        ::uniffi::setup_scaffolding!();
+        // #[cfg(not(test))]
+        // ::uniffi::setup_scaffolding!();
     };
 }
