@@ -2,22 +2,16 @@ use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
 
-use crate::database::{Database, DATABASE};
-use crate::navigation::Router;
 use crate::updater::{FfiUpdater, Update, Updater};
-use crate::Route;
 
 // Global static APP instance
 static APP: OnceCell<RwLock<App>> = OnceCell::new();
 
 // Event enum represents actions that can be dispatched to the app
 #[derive(uniffi::Enum)]
-pub enum Event {
-    PushRoute { route: Route },
-    PopRoute,
-    ResetRouter,
-}
+pub enum Event {}
 
+// TODO: derive RmpApp which adds global() method and generates FfiApp?
 #[derive(Clone)]
 pub struct App {
     update_receiver: Arc<Receiver<Update>>,
@@ -48,12 +42,7 @@ impl App {
 
     /// Handle event received from frontend
     pub fn handle_event(&self, event: Event) {
-        let db = Database::global();
-        match event {
-            Event::PushRoute { route } => db.push_route(&route).unwrap(),
-            Event::PopRoute => db.pop_route().unwrap(),
-            Event::ResetRouter => db.reset_router().unwrap(),
-        }
+        match event {}
     }
 
     /// Set up listener for database updates
@@ -71,6 +60,7 @@ impl App {
 #[derive(uniffi::Object)]
 pub struct FfiApp {
     // FIXME: this is database path currently, not actually data dir
+    #[allow(unused_variables)]
     pub data_dir: String,
 }
 
@@ -80,11 +70,6 @@ impl FfiApp {
     #[uniffi::constructor]
     pub fn new(data_dir: String) -> Arc<Self> {
         // Ensure DATABASE initialized. We can now assume DATABASE exists everywhere in our code.
-        if DATABASE.get().is_none() {
-            let db = Database::new(data_dir.clone()).expect("Failed to initialize database");
-            let _ = DATABASE.set(RwLock::new(db));
-        }
-
         Arc::new(Self { data_dir })
     }
 
@@ -99,18 +84,6 @@ impl FfiApp {
             .read()
             .expect("fixme")
             .listen_for_updates(updater);
-    }
-
-    /// Get the router
-    pub fn get_router(&self) -> Router {
-        // Use Router's static method directly
-        Router::get()
-    }
-
-    /// Get the current route (or None if router is empty)
-    pub fn get_current_route(&self) -> Option<Route> {
-        // Use Router's static method directly
-        Router::get().current_route()
     }
 }
 
