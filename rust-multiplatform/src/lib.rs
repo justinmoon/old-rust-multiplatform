@@ -6,10 +6,18 @@
 // Re-export uniffi for convenience in user crates
 pub use uniffi;
 
+// Internal modules
 mod macros;
+mod utils;
+mod generated_code_template;
 
-// Export the register_app macro as the main entry point for users
+// Public exports
 pub use macros::register_app;
+pub use utils::listen_for_model_updates;
 
 /// Traits that can be implemented by app models to integrate with the framework
 pub mod traits;
+
+// Re-export frequently used types to make it easier for app developers
+pub use crossbeam;
+pub use once_cell;
