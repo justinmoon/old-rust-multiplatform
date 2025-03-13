@@ -2,7 +2,7 @@ use crossbeam::channel::{unbounded, Receiver, Sender};
 use once_cell::sync::OnceCell;
 use std::sync::{Arc, RwLock};
 
-use crate::view_model::{FfiViewModel, ModelUpdate, ViewModel};
+use crate::view_model::{ModelUpdate, RmpViewModel, ViewModel};
 
 // Global static APP instance
 static GLOBAL_MODEL: OnceCell<RwLock<Action>> = OnceCell::new();
@@ -21,7 +21,7 @@ pub struct Action {
 
 impl Action {
     /// Create a new instance of the app
-    pub fn new(singleton: &FfiModel) -> Self {
+    pub fn new(singleton: &RmpModel) -> Self {
         android_logger::init_once(
             android_logger::Config::default().with_min_level(log::Level::Info),
         );
@@ -36,7 +36,7 @@ impl Action {
     }
 
     /// Fetch global instance of the app, or create one if it doesn't exist
-    pub fn get_or_set_global_model(ffi_model: &FfiModel) -> &'static RwLock<Action> {
+    pub fn get_or_set_global_model(ffi_model: &RmpModel) -> &'static RwLock<Action> {
         GLOBAL_MODEL.get_or_init(|| RwLock::new(Action::new(ffi_model)))
     }
 
@@ -46,7 +46,7 @@ impl Action {
     }
 
     /// Set up listener for database updates
-    pub fn listen_for_updates(&self, updater: Box<dyn FfiViewModel>) {
+    pub fn listen_for_updates(&self, updater: Box<dyn RmpViewModel>) {
         let update_receiver = self.model_update_rx.clone();
         std::thread::spawn(move || {
             while let Ok(field) = update_receiver.recv() {
@@ -58,14 +58,14 @@ impl Action {
 
 /// Representation of our app over FFI. Essentially a wrapper of [`App`].
 #[derive(uniffi::Object)]
-pub struct FfiModel {
+pub struct RmpModel {
     // FIXME: this is database path currently, not actually data dir
     #[allow(unused_variables)]
     pub data_dir: String,
 }
 
 #[uniffi::export]
-impl FfiModel {
+impl RmpModel {
     #[uniffi::constructor]
     pub fn new(data_dir: String) -> Arc<Self> {
         Arc::new(Self { data_dir })
@@ -79,7 +79,7 @@ impl FfiModel {
             .handle_event(event);
     }
 
-    pub fn listen_for_updates(&self, updater: Box<dyn FfiViewModel>) {
+    pub fn listen_for_updates(&self, updater: Box<dyn RmpViewModel>) {
         self.get_or_set_global_model()
             .read()
             .expect("fixme")
@@ -87,7 +87,7 @@ impl FfiModel {
     }
 }
 
-impl FfiModel {
+impl RmpModel {
     /// Fetch global instance of the app, or create one if it doesn't exist
     fn get_or_set_global_model(&self) -> &RwLock<Action> {
         Action::get_or_set_global_model(self)

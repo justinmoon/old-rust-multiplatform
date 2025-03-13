@@ -31,7 +31,7 @@ impl ViewModel {
 // FIXME(justin): seems like this should be called FFiListener or something like
 // that. Maybe the callback should be `handle_update`?
 #[uniffi::export(callback_interface)]
-pub trait FfiViewModel: Send + Sync + 'static {
+pub trait RmpViewModel: Send + Sync + 'static {
     /// Essentially a callback to the frontend
     fn dispatch(&self, update: ModelUpdate);
 }
