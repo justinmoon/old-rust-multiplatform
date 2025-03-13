@@ -1,25 +1,21 @@
-uniffi::setup_scaffolding!();
+rust_multiplatform::register_app!(Model, ViewModel, Action, ModelUpdate);
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use std::sync::Arc;
 
-// Add the logging module
 mod logging;
 
-// Define a model update type
 #[derive(Debug, PartialEq, Clone, uniffi::Enum)]
 pub enum ModelUpdate {
     CountChanged { count: i32 },
 }
 
-// Define an action type
 #[derive(Debug, PartialEq, uniffi::Enum)]
 pub enum Action {
     Increment,
     Decrement,
 }
 
-// Define a model with a receiver for updates
 #[derive(Debug)]
 pub struct Model {
     pub count: i32,
@@ -33,12 +29,9 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
     type UpdateType = ModelUpdate;
 
     fn create(data_dir: String) -> Self {
-        // Create a channel for model updates
+        // Create a channel, give sender to ViewModel and receiver to Model
         let (sender, receiver) = unbounded();
-
-        // Initialize the ViewModel with the sender
         ViewModel::init(sender);
-
         Model {
             count: 0,
             data_dir,
@@ -47,7 +40,6 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
     }
 
     fn action(&mut self, action: Self::ActionType) {
-        log::info!("action {:?}", action);
         match action {
             Action::Increment => self.count += 1,
             Action::Decrement => self.count -= 1,
@@ -60,12 +52,10 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
     }
 }
 
-// Define a view model
 #[derive(Clone)]
 struct ViewModel(pub Sender<ModelUpdate>);
 
 // Use the register_app macro to generate the FFI code
-rust_multiplatform::register_app!(Model, ViewModel, Action, ModelUpdate);
 
 #[uniffi::export]
 impl RmpModel {

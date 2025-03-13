@@ -152,7 +152,7 @@ macro_rules! register_app {
         }
 
         // 8. Set up the uniffi scaffolding
-        // #[cfg(not(test))]
-        // ::uniffi::setup_scaffolding!();
+        #[cfg(not(test))]
+        ::uniffi::setup_scaffolding!();
     };
 }
