@@ -17,7 +17,7 @@ fn test_action_handling() {
     let model = RmpModel::new("test_dir".to_string());
 
     // Call the action method
-    model.action(Action::Action);
+    model.action(Action::Increment);
 
     // Get the global model
     let global_model = model.get_or_set_global_model().read().unwrap();
@@ -35,12 +35,12 @@ fn test_view_model() {
     ViewModel::init(sender);
 
     // Send a model update
-    ViewModel::model_update(ModelUpdate::Update { value: 42 });
+    ViewModel::model_update(ModelUpdate::CountChanged { count: 42 });
 
     // Verify the update was sent
     if let Ok(update) = receiver.try_recv() {
         match update {
-            ModelUpdate::Update { value } => assert_eq!(value, 42),
+            ModelUpdate::CountChanged { count } => assert_eq!(count, 42),
         }
     } else {
         panic!("No update received");

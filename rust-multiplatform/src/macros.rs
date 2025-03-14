@@ -31,32 +31,32 @@ macro_rules! register_app {
 
         // 2. Define the RmpViewModel trait first
         // In regular usage, mark with uniffi callback_interface
-        #[cfg(not(test))]
+        // #[cfg(not(test))]
         #[::uniffi::export(callback_interface)]
         pub trait RmpViewModel: Send + Sync + 'static {
             fn model_update(&self, model_update: $ModelUpdate);
         }
 
         // In test mode, just define the trait without the uniffi attributes
-        #[cfg(test)]
-        pub trait RmpViewModel: Send + Sync + 'static {
-            fn model_update(&self, model_update: $ModelUpdate);
-        }
+        // #[cfg(test)]
+        // pub trait RmpViewModel: Send + Sync + 'static {
+        //     fn model_update(&self, model_update: $ModelUpdate);
+        // }
 
         // 3. Define a wrapper struct for FFI
-        #[cfg(not(test))]
+        // #[cfg(not(test))]
         #[derive(uniffi::Object)]
         pub struct RmpModel {
             pub data_dir: String,
         }
 
-        #[cfg(test)]
-        pub struct RmpModel {
-            pub data_dir: String,
-        }
+        // #[cfg(test)]
+        // pub struct RmpModel {
+        //     pub data_dir: String,
+        // }
 
         // 4. Implement the FFI interface
-        #[cfg(not(test))]
+        // #[cfg(not(test))]
         #[::uniffi::export]
         impl RmpModel {
             #[::uniffi::constructor]
@@ -90,29 +90,29 @@ macro_rules! register_app {
             }
         }
 
-        #[cfg(test)]
-        impl RmpModel {
-            pub fn new(data_dir: String) -> std::sync::Arc<Self> {
-                std::sync::Arc::new(Self { data_dir })
-            }
+        // #[cfg(test)]
+        // impl RmpModel {
+        //     pub fn new(data_dir: String) -> std::sync::Arc<Self> {
+        //         std::sync::Arc::new(Self { data_dir })
+        //     }
 
-            pub fn action(&self, action: $Action) {
-                // Get the global model and call its action method
-                let mut model = self
-                    .get_or_set_global_model()
-                    .write()
-                    .expect("Failed to acquire write lock on model");
+        //     pub fn action(&self, action: $Action) {
+        //         // Get the global model and call its action method
+        //         let mut model = self
+        //             .get_or_set_global_model()
+        //             .write()
+        //             .expect("Failed to acquire write lock on model");
 
-                // Call the action method from the RmpAppModel trait
-                use $crate::traits::RmpAppModel;
-                model.action(action);
-            }
+        //         // Call the action method from the RmpAppModel trait
+        //         use $crate::traits::RmpAppModel;
+        //         model.action(action);
+        //     }
 
-            pub fn listen_for_model_updates(&self, _updater: Box<dyn RmpViewModel>) {
-                // For tests, we won't actually call listen_for_model_updates to avoid
-                // thread spawning and other side effects
-            }
-        }
+        //     pub fn listen_for_model_updates(&self, _updater: Box<dyn RmpViewModel>) {
+        //         // For tests, we won't actually call listen_for_model_updates to avoid
+        //         // thread spawning and other side effects
+        //     }
+        // }
 
         // 5. Helper methods for the FFI object
         impl RmpModel {
@@ -152,7 +152,7 @@ macro_rules! register_app {
         }
 
         // 8. Set up the uniffi scaffolding
-        #[cfg(not(test))]
+        // #[cfg(not(test))]
         ::uniffi::setup_scaffolding!();
     };
 }
