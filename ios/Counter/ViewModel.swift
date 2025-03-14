@@ -14,7 +14,7 @@ import SwiftUI
         self.count = model.getCount();
     
         self.model.setupLogging()
-        self.model.listenForModelUpdates(updater: self)
+        self.model.listenForModelUpdates(viewModel: self)
     }
 
     func modelUpdate(modelUpdate: ModelUpdate) {

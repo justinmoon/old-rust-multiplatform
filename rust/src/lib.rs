@@ -1,22 +1,30 @@
-rust_multiplatform::register_app!(Model, ViewModel, Action, ModelUpdate);
+mod logging;
+mod tests;
 
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use std::sync::Arc;
 
-mod logging;
-mod tests;
-
+/// State updates sent from backend Model to frontend RmpViewModel
 #[derive(Debug, PartialEq, Clone, uniffi::Enum)]
 pub enum ModelUpdate {
     CountChanged { count: i32 },
 }
 
+/// Requests for state changes or side effects sent from
+/// frontend RmpViewModel to backend Model
 #[derive(Debug, PartialEq, uniffi::Enum)]
 pub enum Action {
     Increment,
     Decrement,
 }
 
+/// ViewModel synchronizes state from Model to RmpViewModel on frontend
+/// which is generated from ViewModel
+#[derive(Clone)]
+struct ViewModel(pub Sender<ModelUpdate>);
+
+/// Source of truth for application state
+/// RmpModel is generated from Model and callable from frontend
 #[derive(Debug)]
 pub struct Model {
     pub count: i32,
@@ -24,7 +32,6 @@ pub struct Model {
     update_receiver: Arc<Receiver<ModelUpdate>>,
 }
 
-// Implement RmpAppModel for the model
 impl rust_multiplatform::traits::RmpAppModel for Model {
     type ActionType = Action;
     type UpdateType = ModelUpdate;
@@ -53,11 +60,6 @@ impl rust_multiplatform::traits::RmpAppModel for Model {
     }
 }
 
-#[derive(Clone)]
-struct ViewModel(pub Sender<ModelUpdate>);
-
-// Use the register_app macro to generate the FFI code
-
 #[uniffi::export]
 impl RmpModel {
     pub fn get_count(&self) -> i32 {
@@ -67,8 +69,10 @@ impl RmpModel {
             .count
     }
 
-    /// Initialize platform-specific logging
     pub fn setup_logging(&self) {
         logging::init_logging();
     }
 }
+
+/// Generate RmpModel and RmpViewModel from these
+rust_multiplatform::register_app!(Model, ViewModel, Action, ModelUpdate);
